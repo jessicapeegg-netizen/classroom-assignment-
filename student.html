@@ -948,9 +948,7 @@
 
     function initApp() {
       try { const cachedLogo = localStorage.getItem('schoolLogo'); if (cachedLogo) applyStudentLogo(cachedLogo); } catch(e) {}
-      try { const serverLogo = 'const serverLogo = '';
-    try { if (window.LMS) LMS.loadCachedLogo(); } catch(e) {}
-if (serverLogo) applyStudentLogo(serverLogo); } catch(e) {}
+      try { const serverLogo = ''; if (window.LMS) LMS.loadCachedLogo(); if (serverLogo) applyStudentLogo(serverLogo); } catch(e) {}
       const token = getStudentToken();
       if (!token || typeof google === 'undefined' || !google.script || !google.script.run) {
         navigateToPage('login');
