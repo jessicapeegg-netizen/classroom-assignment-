@@ -1885,30 +1885,170 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
 
 
 
-    // Auto-login / Persistent Session for Students
-
+        // Auto-login / Persistent Session for Students
     function initApp() {
       if (JOIN_COURSE_ID) document.getElementById('joinCourseBanner')?.classList.remove('hidden');
-      // sw disabled
 
-      setTimeout(() => {
+      // 0ms cached logo
+      try {
+        const cachedLogo = localStorage.getItem('schoolLogo');
+        if (cachedLogo) applyLoginLogo(cachedLogo);
+      } catch(e) {}
 
+      // ถ้ามาจาก "ออกจากระบบ / สลับบัญชี" ให้ล้าง session ทั้งหมดและไม่ถามบัญชีเดิมซ้ำ
+      let forceSwitch = false;
+      try {
+        const q = new URLSearchParams(window.location.search);
+        forceSwitch = q.get('switch') === '1' || q.get('logout') === '1';
+      } catch (e) {}
+
+      if (forceSwitch) {
+        clearStudentAuth();
+        if (window.LMS) {
+          LMS.clearStudentAuth();
+          LMS.clearTeacherAuth();
+        }
         try {
+          localStorage.removeItem('teacher_auth_token');
+          localStorage.removeItem('teacher_session');
+          localStorage.removeItem('admin_authenticated');
+          localStorage.removeItem('teacher_id');
+          localStorage.removeItem('teacher_name');
+          localStorage.removeItem('teacher_role');
+          sessionStorage.clear();
+        } catch(e) {}
+        return;
+      }
 
-          if (typeof Swal !== 'undefined' && Swal.isVisible() && Swal.getTitle() && Swal.getTitle().textContent.includes('กำลัง')) {
+      const token = getStudentStoredToken();
+      if (!token || typeof google === 'undefined' || !google.script || !google.script.run) return;
 
-            Swal.close();
-
+      google.script.run
+        .withSuccessHandler(res => {
+          if (!res || !res.valid || res.type !== 'student') {
+            clearStudentAuth();
+            return;
           }
 
-        } catch(e) {}
+          // แสดง Welcome Back เฉพาะคนที่ติ๊ก "จดจำฉัน" จริงเท่านั้น
+          let remembered = false;
+          try {
+            remembered = localStorage.getItem(STUDENT_REMEMBER_KEY) === '1';
+          } catch(e) {}
 
-      }, 500);
+          if (!remembered) {
+            navigateToPage('student');
+            return;
+          }
 
+          const saved = getStudentStoredProfile();
+
+          Swal.fire({
+            icon: 'info',
+            title: 'ยินดีต้อนรับกลับ ✨',
+            html: '<p class="text-sm text-slate-600 mb-1">มีบัญชีที่คุณเลือกให้ระบบจดจำไว้ <b>' + escapeHtmlLogin(saved.Name || res.displayName || 'นักเรียน') + '</b></p>' +
+                  '<p class="text-xs text-slate-400">ต้องการเข้าสู่ระบบต่อ หรือใช้บัญชีอื่น?</p>',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'เข้าสู่ระบบทันที',
+            denyButtonText: 'ใช้บัญชีอื่น',
+            cancelButtonText: 'อยู่หน้า Login',
+            confirmButtonColor: '#0284c7',
+            denyButtonColor: '#64748b',
+            cancelButtonColor: '#cbd5e1'
+          }).then(r => {
+            if (r.isConfirmed) {
+              navigateToPage('student');
+            } else if (r.isDenied) {
+              clearStudentAuth();
+              document.getElementById('loginUsername')?.focus();
+            }
+          });
+        })
+        .withFailureHandler(() => {
+          clearStudentAuth();
+        })
+        .validateSession(token, 'student');
     }
 
+    function setAuthTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const regForm = document.getElementById('registerForm');
+      const tabLoginBtn = document.getElementById('tabLoginBtn');
+      const tabRegisterBtn = document.getElementById('tabRegisterBtn');
 
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        tabLoginBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-sky-800 bg-white shadow-sm transition-all duration-200 flex items-center justify-center gap-2';
+        tabRegisterBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all duration-200 flex items-center justify-center gap-2';
+      } else {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+        tabRegisterBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-sky-800 bg-white shadow-sm transition-all duration-200 flex items-center justify-center gap-2';
+        tabLoginBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all duration-200 flex items-center justify-center gap-2';
+      }
+    }
 
+    function togglePassVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash text-sm text-sky-600';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye text-sm text-slate-400';
+      }
+    }
+
+    function previewRegAvatar(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        registeredAvatarBase64 = evt.target.result;
+        document.getElementById('regPhotoPreview').src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    let isLoadingPopupActive = false;
+
+    function showLoadingPopup(title = 'กำลังโหลดข้อมูล...', text = 'กำลังดึงข้อมูลจากระบบ กรุณารอสักครู่') {
+      isLoadingPopupActive = true;
+      Swal.fire({
+        title: title,
+        text: text,
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+          if (!isLoadingPopupActive) {
+            Swal.close();
+          }
+        }
+      });
+    }
+
+    function closeLoadingPopup() {
+      isLoadingPopupActive = false;
+      try { Swal.close(); } catch(e) {}
+      setTimeout(() => {
+        try {
+          if (typeof Swal !== 'undefined' && Swal.isVisible() && Swal.getTitle() && Swal.getTitle().textContent.includes('กำลัง')) {
+            Swal.close();
+          }
+        } catch(e) {}
+      }, 150);
+      setTimeout(() => {
+        try {
+          if (typeof Swal !== 'undefined' && Swal.isVisible() && Swal.getTitle() && Swal.getTitle().textContent.includes('กำลัง')) {
+            Swal.close();
+          }
+        } catch(e) {}
+      }, 500);
+    }
 
     function studentForgotPasswordInfo() {
       Swal.fire({
