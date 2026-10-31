@@ -205,7 +205,9 @@ const LMS = {
   // 3. Navigation Helper (รองรับ GitHub Pages และ GAS Web App)
   // ------------------------------------------------------------------
   navigateTo(pageName, params = {}) {
-    const isGas = typeof google !== 'undefined' && google.script && google.script.run;
+    const isGas = (window.location.hostname.includes('script.google.com') ||
+                   window.location.hostname.includes('googleusercontent.com')) &&
+                  !window.google?.script?.run?.__isShim;
     let targetUrl = '';
 
     if (isGas) {
@@ -219,7 +221,7 @@ const LMS = {
       let filename = 'login.html';
       if (pageName === 'index' || pageName === 'student') filename = 'student.html';
       else if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
-      else if (pageName === 'login') filename = 'login.html';
+      else if (pageName === 'login') filename = 'index.html';
       else if (pageName === 'home') filename = 'index.html';
 
       const currentPath = window.location.pathname;
