@@ -221,8 +221,8 @@ const LMS = {
       let filename = 'login.html';
       if (pageName === 'index' || pageName === 'student') filename = 'student.html';
       else if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
-      else if (pageName === 'login') filename = 'index.html';
-      else if (pageName === 'home') filename = 'index.html';
+      else if (pageName === 'login') filename = 'login.html';
+      else if (pageName === 'home') filename = 'login.html';
 
       const currentPath = window.location.pathname;
       const dir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);

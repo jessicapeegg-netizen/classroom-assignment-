@@ -12,6 +12,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบตรวจงานและจัดการสำหรับครูผู้สอน | Teacher & Admin Portal</title>
+  <!-- DNS Prefetch & Preconnect for Maximum Speed -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+  <link rel="dns-prefetch" href="https://lh3.googleusercontent.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   
   <!-- Google Fonts: Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,9 +61,9 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
     body {
@@ -417,8 +427,8 @@ const LMS = {
       let filename = 'login.html';
       if (pageName === 'index' || pageName === 'student') filename = 'student.html';
       else if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
-      else if (pageName === 'login') filename = 'index.html';
-      else if (pageName === 'home') filename = 'index.html';
+      else if (pageName === 'login') filename = 'login.html';
+      else if (pageName === 'home') filename = 'login.html';
 
       const currentPath = window.location.pathname;
       const dir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
@@ -1445,6 +1455,54 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- 0. ตั้งค่ารูปภาพโปรไฟล์ครูผู้สอน (Teacher Profile Photo) -->
+              <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/50 rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-emerald-100/80 pb-3">
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <i class="fa-solid fa-user-circle text-emerald-600"></i> รูปโปรไฟล์ครูผู้สอน (Teacher Profile Photo)
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-0.5">เปลี่ยนรูปภาพโปรไฟล์ของคุณที่แสดงในเมนูด้านข้าง แถบด้านบน และรายงานต่าง ๆ</p>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100/70 text-emerald-800 border border-emerald-200">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> Google Drive Cloud Storage
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                  <div class="lg:col-span-3 flex flex-col items-center text-center space-y-2">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('settingsTeacherAvatarInput').click()">
+                      <img id="settingsTeacherAvatarPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' fill='%2310b981'><circle cx='64' cy='64' r='64' fill='%23ecfdf5'/><path d='M64 64a24 24 0 100-48 24 24 0 000 48zm0 12c-26.7 0-48 16.3-48 36.5 0 2.5 2 4.5 4.5 4.5h87c2.5 0 4.5-2 4.5-4.5 0-20.2-21.3-36.5-48-36.5z'/></svg>" alt="Teacher Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-emerald-200 shadow-lg shadow-emerald-600/10">
+                      <div class="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
+                        <i class="fa-solid fa-camera mr-1"></i> เปลี่ยนรูป
+                      </div>
+                    </div>
+                    <span class="text-[11px] font-semibold text-slate-500">รูปโปรไฟล์ปัจจุบัน</span>
+                  </div>
+
+                  <div class="lg:col-span-9 space-y-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <input type="file" id="settingsTeacherAvatarInput" accept="image/png,image/jpeg,image/webp,image/gif" onchange="onSelectTeacherAvatar(event)" class="hidden">
+                      <button type="button" onclick="document.getElementById('settingsTeacherAvatarInput').click()" class="flex-grow flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-emerald-50/50 hover:bg-emerald-50 rounded-xl text-xs font-semibold text-emerald-800 transition cursor-pointer">
+                        <i class="fa-solid fa-folder-open text-emerald-600"></i>
+                        <span id="settingsTeacherAvatarBtnText">คลิกเพื่อเลือกรูปถ่าย / รูปภาพโปรไฟล์ครู</span>
+                      </button>
+                    </div>
+                    <div id="settingsTeacherAvatarFileInfo" class="hidden text-xs text-emerald-700 font-medium px-2 py-1 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+                      <i class="fa-solid fa-file-image"></i> <span></span>
+                    </div>
+                    <div>
+                      <input type="url" id="settingsTeacherAvatarUrlInput" placeholder="หรือระบุ Image URL โดยตรง (เช่น ลิงก์รูปภาพ)" class="form-input text-xs w-full">
+                    </div>
+                    <div class="pt-1">
+                      <button type="button" onclick="saveTeacherAvatarFromSettings()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกรูปโปรไฟล์ครู
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               
               <!-- 1. การตั้งค่าภาคเรียน -->
               <div class="bg-slate-50/70 rounded-2xl p-4 border border-slate-100">
@@ -1896,6 +1954,26 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       </div>
 
       <form onsubmit="handleTeacherProfileSubmit(event)" class="p-6 space-y-4">
+        <!-- Teacher Avatar Upload & Live Preview -->
+        <div class="flex flex-col items-center justify-center p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 mb-2">
+          <div class="relative group cursor-pointer" onclick="document.getElementById('profTeacherAvatarInput').click()">
+            <img id="profTeacherAvatarPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' fill='%2310b981'><circle cx='64' cy='64' r='64' fill='%23ecfdf5'/><path d='M64 64a24 24 0 100-48 24 24 0 000 48zm0 12c-26.7 0-48 16.3-48 36.5 0 2.5 2 4.5 4.5 4.5h87c2.5 0 4.5-2 4.5-4.5 0-20.2-21.3-36.5-48-36.5z'/></svg>" alt="Teacher Avatar" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md shadow-emerald-600/15">
+            <div class="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
+              <i class="fa-solid fa-camera mr-1"></i> เปลี่ยนรูป
+            </div>
+            <button type="button" class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shadow-md border-2 border-white hover:bg-emerald-700 transition">
+              <i class="fa-solid fa-camera"></i>
+            </button>
+          </div>
+          <input type="file" id="profTeacherAvatarInput" accept="image/png,image/jpeg,image/webp,image/gif" onchange="onSelectTeacherAvatar(event)" class="hidden">
+          <div class="mt-2 text-center">
+            <button type="button" onclick="document.getElementById('profTeacherAvatarInput').click()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 underline">
+              คลิกเพื่อเลือกรูปภาพจากเครื่อง
+            </button>
+            <p class="text-[10px] text-slate-400 mt-0.5">รองรับไฟล์ภาพ JPG, PNG, WebP (บันทึกลง Google Drive)</p>
+          </div>
+        </div>
+
         <!-- Switch Account Dropdown (if multiple teachers exist) -->
         <div id="teacherAccountSelectorContainer" class="hidden bg-emerald-50/70 p-3 rounded-xl border border-emerald-100">
           <label class="text-xs font-bold text-emerald-800 block mb-1">สลับบัญชีครูผู้สอน:</label>
@@ -2101,7 +2179,25 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
     let currentGradeAttachedFile = null;
 
     // Initialization
-    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
+      // 0ms Instant First Paint: Render cached teacher profile immediately
+      try {
+        const cachedProfile = JSON.parse(localStorage.getItem('teacher_session') || sessionStorage.getItem('teacher_session') || '{}');
+        if (cachedProfile.Name) {
+          const sName = document.getElementById('sidebarTeacherName');
+          if (sName) sName.innerHTML = cachedProfile.Name + ' <i class="fa-solid fa-pen-to-square text-[10px] text-slate-400"></i>';
+          const sClass = document.getElementById('sidebarTeacherClass');
+          if (sClass) sClass.textContent = (cachedProfile.Subject || 'วิชาการ') + ' (' + (cachedProfile.ClassResponsible || 'ทุกระดับชั้น') + ')';
+          const sAvatar = document.getElementById('sidebarAvatar');
+          if (sAvatar && cachedProfile.AvatarUrl) sAvatar.src = cachedProfile.AvatarUrl;
+          const tTopName = document.getElementById('topTeacherName');
+          if (tTopName) tTopName.innerHTML = cachedProfile.Name + ' <i class="fa-solid fa-pen text-[9px] text-slate-400"></i>';
+          const tTopAvatar = document.getElementById('topTeacherAvatar');
+          if (tTopAvatar && cachedProfile.AvatarUrl) tTopAvatar.src = cachedProfile.AvatarUrl;
+        }
+        const cachedLogo = localStorage.getItem('schoolLogo');
+        if (cachedLogo && typeof applySystemLogo === 'function') applySystemLogo(cachedLogo);
+      } catch(e) {}
       const token = getTeacherToken();
       if (!token || typeof google === 'undefined' || !google.script || !google.script.run) {
         navigateToPage('login');
@@ -3376,6 +3472,119 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       openModal('addAnnouncementModal');
     }
 
+    
+    // ====================================================================
+    // Teacher Avatar Upload & Settings Logic
+    // ====================================================================
+    let selectedTeacherAvatarBase64 = null;
+
+    function onSelectTeacherAvatar(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.size > 10 * 1024 * 1024) {
+        return Swal.fire('ขนาดไฟล์เกินกำหนด', 'กรุณาเลือกไฟล์ภาพขนาดไม่เกิน 10MB', 'warning');
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        selectedTeacherAvatarBase64 = evt.target.result;
+
+        const prev1 = document.getElementById('profTeacherAvatarPreview');
+        if (prev1) prev1.src = selectedTeacherAvatarBase64;
+
+        const prev2 = document.getElementById('settingsTeacherAvatarPreview');
+        if (prev2) prev2.src = selectedTeacherAvatarBase64;
+
+        const finfo = document.getElementById('settingsTeacherAvatarFileInfo');
+        if (finfo) {
+          finfo.classList.remove('hidden');
+          finfo.querySelector('span').textContent = 'เลือกไฟล์: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveTeacherAvatarFromSettings() {
+      const urlInput = document.getElementById('settingsTeacherAvatarUrlInput');
+      const inputUrl = urlInput ? urlInput.value.trim() : '';
+
+      if (!selectedTeacherAvatarBase64 && !inputUrl) {
+        return Swal.fire('กรุณาเลือกรูปภาพ', 'โปรดอัปโหลดไฟล์ภาพ หรือระบุ Image URL เพื่อบันทึก', 'warning');
+      }
+
+      showSplashLoading('กำลังบันทึกรูปโปรไฟล์ครู...', 'กำลังอัปโหลดเข้าสู่ Google Drive ความเร็วสูง');
+
+      const payload = {
+        authToken: getTeacherToken(),
+        teacherId: currentTeacherData?.teacher?.TeacherID || localStorage.getItem('teacher_id') || 'TCH-001'
+      };
+
+      if (selectedTeacherAvatarBase64) {
+        payload.base64Avatar = selectedTeacherAvatarBase64;
+        payload.fileName = 'teacher_' + payload.teacherId + '_' + Date.now() + '.png';
+      } else if (inputUrl) {
+        payload.avatarUrl = inputUrl;
+      }
+
+      const onDone = (res) => {
+        hideSplashLoading();
+        if (handleTeacherAuthFailure(res)) return;
+        if (res && res.success) {
+          const newUrl = res.avatarUrl || selectedTeacherAvatarBase64 || inputUrl;
+          if (currentTeacherData && currentTeacherData.teacher) {
+            currentTeacherData.teacher.AvatarUrl = newUrl;
+          }
+          const sAvatar = document.getElementById('sidebarAvatar');
+          if (sAvatar) sAvatar.src = newUrl;
+          const tTopAvatar = document.getElementById('topTeacherAvatar');
+          if (tTopAvatar) tTopAvatar.src = newUrl;
+          const prev1 = document.getElementById('settingsTeacherAvatarPreview');
+          if (prev1) prev1.src = newUrl;
+          const prev2 = document.getElementById('profTeacherAvatarPreview');
+          if (prev2) prev2.src = newUrl;
+
+          try {
+            const sess = JSON.parse(localStorage.getItem('teacher_session') || sessionStorage.getItem('teacher_session') || '{}');
+            sess.AvatarUrl = newUrl;
+            localStorage.setItem('teacher_session', JSON.stringify(sess));
+          } catch(e) {}
+
+          selectedTeacherAvatarBase64 = null;
+          const finfo = document.getElementById('settingsTeacherAvatarFileInfo');
+          if (finfo) finfo.classList.add('hidden');
+          if (urlInput) urlInput.value = '';
+
+          Swal.fire({
+            icon: 'success',
+            title: 'บันทึกรูปโปรไฟล์ครูสำเร็จ!',
+            text: 'ระบบได้อัปเดตรูปภาพโปรไฟล์เรียบร้อยแล้ว',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire('เกิดข้อผิดพลาด', res ? res.message : 'ไม่สามารถบันทึกรูปโปรไฟล์ได้', 'error');
+        }
+      };
+
+      if (typeof google !== 'undefined' && google.script && google.script.run && !google.script.run.__isShim) {
+        google.script.run
+          .withSuccessHandler(onDone)
+          .withFailureHandler(err => {
+            hideSplashLoading();
+            Swal.fire('เกิดข้อผิดพลาด', err.toString(), 'error');
+          })
+          .updateTeacherProfile(payload);
+      } else if (window.LMS) {
+        LMS.call('updateTeacherProfile', payload)
+          .then(onDone)
+          .catch(err => {
+            hideSplashLoading();
+            Swal.fire('เกิดข้อผิดพลาด', err.toString(), 'error');
+          });
+      }
+    }
+
     function openTeacherProfileModal() {
       const tch = currentTeacherData?.teacher || {};
       document.getElementById('profTeacherName').value = tch.Name || '';
@@ -3383,6 +3592,12 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       document.getElementById('profTeacherClass').value = tch.ClassResponsible || '';
       document.getElementById('profTeacherEmail').value = tch.Email || '';
       document.getElementById('profTeacherPassword').value = '';
+      selectedTeacherAvatarBase64 = null;
+      const curAvatar = tch.AvatarUrl || DEFAULT_TEACHER_AVATAR;
+      const prevProfImg = document.getElementById('profTeacherAvatarPreview');
+      if (prevProfImg) prevProfImg.src = curAvatar;
+      const prevSetImg = document.getElementById('settingsTeacherAvatarPreview');
+      if (prevSetImg) prevSetImg.src = curAvatar;
 
       const selCont = document.getElementById('teacherAccountSelectorContainer');
       const sel = document.getElementById('teacherAccountSelector');
@@ -3602,6 +3817,10 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         email: document.getElementById('profTeacherEmail').value.trim(),
         password: document.getElementById('profTeacherPassword').value.trim()
       };
+      if (selectedTeacherAvatarBase64) {
+        payload.base64Avatar = selectedTeacherAvatarBase64;
+        payload.fileName = 'teacher_' + payload.teacherId + '.png';
+      }
 
       closeModal('teacherProfileModal');
       showSplashLoading('กำลังบันทึกโปรไฟล์...', 'กรุณารอสักครู่');
@@ -3612,7 +3831,20 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
             hideSplashLoading();
             if (handleTeacherAuthFailure(res)) return;
             if (res && res.success) {
-              Swal.fire({ icon: 'success', title: 'บันทึกโปรไฟล์สำเร็จ!', timer: 1400, showConfirmButton: false });
+              if (res.avatarUrl) {
+                if (currentTeacherData && currentTeacherData.teacher) currentTeacherData.teacher.AvatarUrl = res.avatarUrl;
+                const sAvatar = document.getElementById('sidebarAvatar');
+                if (sAvatar) sAvatar.src = res.avatarUrl;
+                const tTopAvatar = document.getElementById('topTeacherAvatar');
+                if (tTopAvatar) tTopAvatar.src = res.avatarUrl;
+                try {
+                  const sess = JSON.parse(localStorage.getItem('teacher_session') || '{}');
+                  sess.AvatarUrl = res.avatarUrl;
+                  localStorage.setItem('teacher_session', JSON.stringify(sess));
+                } catch(e) {}
+              }
+              Swal.fire({ icon: 'success', title: 'บันทึกโปรไฟล์และรูปภาพสำเร็จ!', timer: 1500, showConfirmButton: false });
+              selectedTeacherAvatarBase64 = null;
               loadTeacherDashboard();
             } else {
               Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res ? res.message : '' });

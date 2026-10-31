@@ -12,6 +12,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบส่งงานนักเรียน | Student Portal</title>
+  <!-- DNS Prefetch & Preconnect for Maximum Speed -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+  <link rel="dns-prefetch" href="https://lh3.googleusercontent.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +73,7 @@
   
   <!-- SweetAlert2 & Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   
   <style>
     body {
@@ -499,8 +509,8 @@ const LMS = {
       let filename = 'login.html';
       if (pageName === 'index' || pageName === 'student') filename = 'student.html';
       else if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
-      else if (pageName === 'login') filename = 'index.html';
-      else if (pageName === 'home') filename = 'index.html';
+      else if (pageName === 'login') filename = 'login.html';
+      else if (pageName === 'home') filename = 'login.html';
 
       const currentPath = window.location.pathname;
       const dir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
@@ -1439,7 +1449,20 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       } catch(e) {}
     }
 
-    function initApp() {
+        function initApp() {
+      // 0ms Instant First Paint: Render cached student profile immediately
+      try {
+        const cachedStudent = JSON.parse(sessionStorage.getItem('student_session') || localStorage.getItem('student_session') || '{}');
+        if (cachedStudent.Name) {
+          const sName = document.getElementById('studentNameText');
+          if (sName) sName.textContent = cachedStudent.Name;
+          const sClass = document.getElementById('studentClassText');
+          if (sClass) sClass.textContent = (cachedStudent.Class || '') + (cachedStudent.Number ? (' เลขที่ ' + cachedStudent.Number) : '');
+          const sAvatar = document.getElementById('studentAvatar');
+          if (sAvatar && cachedStudent.AvatarUrl) sAvatar.src = cachedStudent.AvatarUrl;
+        }
+      } catch(e) {}
+
       try { const cachedLogo = localStorage.getItem('schoolLogo'); if (cachedLogo) applyStudentLogo(cachedLogo); } catch(e) {}
       try { const serverLogo = ''; if (window.LMS) LMS.loadCachedLogo(); if (serverLogo) applyStudentLogo(serverLogo); } catch(e) {}
       const token = getStudentToken();
@@ -1488,116 +1511,76 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       return '';
     }
 
-    function redirectToLoginAfterLogout_(extraParams) {
-      const params = new URLSearchParams();
-      params.set('page', 'login');
-      params.set('logout', '1');
-
-      if (extraParams && typeof extraParams === 'object') {
-        Object.keys(extraParams).forEach(k => {
-          const v = extraParams[k];
-          if (v !== undefined && v !== null && v !== '') {
-            params.set(k, String(v));
-          }
-        });
+        function redirectToLoginAfterLogout_(extraParams) {
+      clearStudentAuth();
+      if (window.LMS && typeof LMS.clearStudentAuth === 'function') LMS.clearStudentAuth();
+      const params = Object.assign({ logout: '1', switch: '1' }, extraParams || {});
+      if (window.LMS && typeof LMS.navigateTo === 'function') {
+        LMS.navigateTo('login', params);
+      } else {
+        const q = new URLSearchParams(params).toString();
+        window.location.href = 'login.html' + (q ? '?' + q : '');
       }
-
-      const doRedirect = (base) => {
-        base = String(base || '').trim();
-
-        if (
-          !base.startsWith('http') ||
-          base.includes('googleusercontent.com')
-        ) {
-          return false;
-        }
-
-        const target =
-          base.split('?')[0].split('#')[0] +
-          '?' + params.toString();
-
-        try {
-          const a = document.createElement('a');
-          a.href = target;
-          a.target = '_top';
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-          return true;
-        } catch(e) {}
-
-        try {
-          window.top.location.href = target;
-          return true;
-        } catch(e) {}
-
-        return false;
-      };
-
-      const base = getCurrentWebAppBaseUrl_();
-      if (doRedirect(base)) return;
-
-      // fallback สุดท้าย: ขอ URL จริงจาก server
-      try {
-        google.script.run
-          .withSuccessHandler(url => {
-            if (!doRedirect(url)) {
-              document.body.innerHTML =
-                '<div style="font-family:sans-serif;padding:40px;text-align:center">' +
-                '<h3>ออกจากระบบแล้ว</h3>' +
-                '<p>กรุณาปิดแท็บนี้แล้วเปิดลิงก์ระบบใหม่</p>' +
-                '</div>';
-            }
-          })
-          .withFailureHandler(() => {
-            document.body.innerHTML =
-              '<div style="font-family:sans-serif;padding:40px;text-align:center">' +
-              '<h3>ออกจากระบบแล้ว</h3>' +
-              '<p>กรุณาปิดแท็บนี้แล้วเปิดลิงก์ระบบใหม่</p>' +
-              '</div>';
-          })
-          .getWebAppUrl();
-      } catch(e) {}
     }
 
     function logoutStudent() {
-      const token = getStudentToken();
+      Swal.fire({
+        title: 'ออกจากระบบ?',
+        text: 'คุณต้องการออกจากระบบส่งงานใช่หรือไม่',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        reverseButtons: true,
+        customClass: {
+          popup: 'rounded-3xl shadow-2xl',
+          confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+          cancelButton: 'rounded-xl text-xs font-semibold px-4 py-2.5'
+        }
+      }).then(res => {
+        if (!res.isConfirmed) return;
 
-      // ล้างข้อมูลในเครื่องก่อนทันที
-      clearStudentAuth();
+        const token = getStudentToken();
+        clearStudentAuth();
+        if (window.LMS && typeof LMS.clearStudentAuth === 'function') LMS.clearStudentAuth();
 
-      let redirected = false;
-      const goLogin = () => {
-        if (redirected) return;
-        redirected = true;
-        redirectToLoginAfterLogout_({ switch: '1' });
-      };
+        let redirected = false;
+        const goLogin = () => {
+          if (redirected) return;
+          redirected = true;
+          redirectToLoginAfterLogout_({ switch: '1' });
+        };
 
-      // fallback: ต่อให้ Apps Script callback ไม่กลับ ก็ไม่ค้างหน้าขาว
-      const fallbackTimer = setTimeout(goLogin, 700);
+        const fallbackTimer = setTimeout(goLogin, 600);
 
-      if (
-        typeof google !== 'undefined' &&
-        google.script &&
-        google.script.run &&
-        token
-      ) {
-        try {
-          google.script.run
-            .withSuccessHandler(() => {
+        if (token) {
+          try {
+            if (typeof google !== 'undefined' && google.script && google.script.run && !google.script.run.__isShim) {
+              google.script.run
+                .withSuccessHandler(() => { clearTimeout(fallbackTimer); goLogin(); })
+                .withFailureHandler(() => { clearTimeout(fallbackTimer); goLogin(); })
+                .logoutSession(token);
+            } else if (window.LMS) {
+              LMS.call('logoutSession', { authToken: token }).finally(() => {
+                clearTimeout(fallbackTimer);
+                goLogin();
+              });
+            } else {
               clearTimeout(fallbackTimer);
               goLogin();
-            })
-            .withFailureHandler(() => {
-              clearTimeout(fallbackTimer);
-              goLogin();
-            })
-            .logoutSession(token);
-        } catch(e) {
+            }
+          } catch(e) {
+            clearTimeout(fallbackTimer);
+            goLogin();
+          }
+        } else {
           clearTimeout(fallbackTimer);
           goLogin();
         }
-      } else {
+      });
+    } else {
         clearTimeout(fallbackTimer);
         goLogin();
       }
