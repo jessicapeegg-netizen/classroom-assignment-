@@ -498,7 +498,7 @@
   <!-- <link rel="manifest" href="manifest.json"> -->
 </head>
 
-<body class="flex items-center justify-center min-h-screen p-4 relative selection:bg-sky-500 selection:text-white">
+<body class="flex flex-col items-center justify-center min-h-screen p-4 relative selection:bg-sky-500 selection:text-white">
 
 
 
@@ -512,6 +512,8 @@
 
 
 
+  <!-- Main Auth & Footer Container -->
+  <div class="w-full max-w-lg flex flex-col items-center relative z-10 my-auto">
   <!-- Main Auth Card Container -->
 
   <div id="authCard" class="w-full max-w-lg glass-card rounded-3xl p-6 sm:p-8 relative z-10 transition-all duration-300 transform hover:shadow-2xl">
@@ -1104,10 +1106,11 @@
     </div>
 
   </div>
-  <footer class="mt-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5 font-medium relative z-10">
-    <span>พัฒนาระบบ โดย</span>
-    <span class="text-sky-600 font-bold bg-white/80 backdrop-blur-sm px-2.5 py-0.5 rounded-lg border border-sky-200/80 shadow-sm">Jessica_P.</span>
-  </footer>
+  <footer class="mt-5 text-center text-xs text-slate-500 flex items-center justify-center gap-1.5 font-medium relative z-10">
+      <span>พัฒนาระบบ โดย</span>
+      <span class="text-sky-700 font-bold bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-lg border border-sky-200 shadow-sm">Jessica_P.</span>
+    </footer>
+  </div>
 
   <script>
     const SCRIPT_URL = window.CONFIG?.API_URL || "";
@@ -2206,7 +2209,7 @@ if (serverLogo) applyLoginLogo(serverLogo);
   </script>
 
 
-<div id="lmsVersionBadge" style="position:fixed;right:10px;bottom:10px;z-index:99999;background:#0f172a;color:#fff;padding:4px 8px;border-radius:999px;font:600 10px Prompt,sans-serif;opacity:.72;pointer-events:none">LMS By T'jessica</div>
+
 </body>
 
 </html>
