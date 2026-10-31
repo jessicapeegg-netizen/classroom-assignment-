@@ -2,26 +2,13 @@
 <!-- LMS V2.3 FAST: optimized data loading -->
 <html lang="th">
 <head>
-
-  <!-- Classroom LMS Configuration & Unified API Client -->
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-
   <base target="_top">
   <script>window.onerror = function(m,s,l) { console.error("JS Error:", m, "line:", l); return false; };</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบตรวจงานและจัดการสำหรับครูผู้สอน | Teacher & Admin Portal</title>
-  <!-- DNS Prefetch & Preconnect for Maximum Speed -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
-  <link rel="dns-prefetch" href="https://lh3.googleusercontent.com">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   
   <!-- Google Fonts: Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,9 +48,9 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!-- Chart.js -->
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
     body {
@@ -172,379 +159,7 @@
     }
   </style>
 
-  <!-- Embedded Classroom LMS Core Engine (No 404 guaranteed) -->
-  <script>
-/**
- * Classroom LMS Configuration
- * พัฒนาระบบ โดย Jessica_P.
- */
-/**
- * การตั้งค่าระบบส่งงานและจัดการการเรียนรู้ (LMS Config)
- * สำหรับใช้งานบน GitHub Pages หรือ Static Hosting
- */
-window.CONFIG = {
-  // นำ URL ที่ได้จากการ Deploy Google Apps Script Web App มาใส่ที่นี่
-  // ตัวอย่าง: https://script.google.com/macros/s/AKfycbx.../exec
-  API_URL: "https://script.google.com/macros/s/AKfycbzZDSZg90H-57NJLfnyG96eu14Bi5mdaezFRK2FCeI18COklwSJqR07iLU5W-nnUB67/exec",
-
-  // ข้อมูล Google Spreadsheet และ Drive สำหรับแสดงผลหรืออ้างอิง
-  SPREADSHEET_ID: "1UMTTfpFow5lh8CSA5kXZVsYhqQlWPa2dCzJQvjAH2V0",
-  SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/1UMTTfpFow5lh8CSA5kXZVsYhqQlWPa2dCzJQvjAH2V0/edit?gid=1702566810#gid=1702566810",
-  DRIVE_FOLDER_ID: "1F7HnHe8wRanOGTIJwN51vqLozSystOEP",
-  DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1F7HnHe8wRanOGTIJwN51vqLozSystOEP",
-
-  // ข้อมูลระบบเริ่มต้น
-  APP_NAME: "ระบบส่งงานนักเรียน & จัดการเรียนการสอน",
-  SEMESTER_DEFAULT: "ภาคเรียนที่ 1/2567",
-  ACADEMIC_YEAR_DEFAULT: "2569",
-
-  // บังคับใช้ HTTP API เสมอ แม้จะเปิดบน Apps Script Web App (แนะนำ true สำหรับ GitHub Pages)
-  FORCE_HTTP_API: false
-};
-
-  </script>
-  <script>
-/**
- * ====================================================================
- * Classroom LMS Unified API Client & Helper Bridge
- * รองรับทั้งการทำงานบน GitHub Pages (Fetch API) และ Google Apps Script (google.script.run)
- * ====================================================================
- */
-
-const LMS_STORAGE_KEYS = {
-  STUDENT_TOKEN: 'student_auth_token',
-  STUDENT_SESSION: 'student_session',
-  STUDENT_REMEMBER: 'student_remember_me',
-  TEACHER_TOKEN: 'teacher_auth_token',
-  TEACHER_SESSION: 'teacher_session',
-  SCHOOL_LOGO: 'schoolLogo'
-};
-
-const LMS = {
-  // ------------------------------------------------------------------
-  // 1. API Call Engine (Dual Mode: REST API / google.script.run)
-  // ------------------------------------------------------------------
-  async call(action, payload = {}) {
-    const isGasEnvironment = typeof google !== 'undefined' && 
-                             google.script && 
-                             google.script.run && 
-                             !google.script.run.__isShim &&
-                             !window.CONFIG?.FORCE_HTTP_API;
-
-    // A. รันบน Google Apps Script Web App
-    if (isGasEnvironment) {
-      return new Promise((resolve, reject) => {
-        try {
-          if (typeof google.script.run[action] === 'function') {
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))[action](payload);
-          } else {
-            // fallback หากเป็น generic action
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .handleApiRequest_(action, payload);
-          }
-        } catch (e) {
-          reject(e);
-        }
-      });
-    }
-
-    // B. รันบน GitHub Pages หรือ Localhost (Fetch POST ไปยัง Web App)
-    const apiUrl = window.CONFIG?.API_URL;
-    if (!apiUrl || apiUrl.includes('YOUR_APPS_SCRIPT_WEB_APP_URL') || apiUrl.includes('_example')) {
-      const msg = 'กรุณาระบุ URL ของ Google Apps Script Web App ในไฟล์ js/config.js ให้ถูกต้อง';
-      console.warn('[LMS API]', msg);
-      return {
-        success: false,
-        message: msg,
-        isConfigMissing: true
-      };
-    }
-
-    try {
-      // เทคนิคสำคัญสำหรับ Google Apps Script CORS:
-      // ใช้ Content-Type: text/plain;charset=utf-8 เพื่อเลี่ยง Preflight (OPTIONS)
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify({
-          action: action,
-          payload: payload
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server returned HTTP ${res.status}: ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      return data;
-    } catch (err) {
-      console.error(`[LMS API Error: ${action}]`, err);
-      return {
-        success: false,
-        error: err.toString(),
-        message: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Google Apps Script ได้ (' + err.message + ')'
-      };
-    }
-  },
-
-  // ------------------------------------------------------------------
-  // 2. Session & Auth Management
-  // ------------------------------------------------------------------
-  getStudentToken() {
-    try {
-      const sessionToken = sessionStorage.getItem(LMS_STORAGE_KEYS.STUDENT_TOKEN);
-      if (sessionToken) return sessionToken;
-      if (localStorage.getItem(LMS_STORAGE_KEYS.STUDENT_REMEMBER) === '1') {
-        return localStorage.getItem(LMS_STORAGE_KEYS.STUDENT_TOKEN) || '';
-      }
-      return '';
-    } catch (e) { return ''; }
-  },
-
-  getStudentProfile() {
-    try {
-      const raw = sessionStorage.getItem(LMS_STORAGE_KEYS.STUDENT_SESSION) ||
-                  localStorage.getItem(LMS_STORAGE_KEYS.STUDENT_SESSION);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  },
-
-  saveStudentAuth(res, rememberMe = false) {
-    try {
-      this.clearStudentAuth();
-      const token = res?.authToken || '';
-      const profile = JSON.stringify(res?.student || {});
-      if (rememberMe) {
-        localStorage.setItem(LMS_STORAGE_KEYS.STUDENT_TOKEN, token);
-        localStorage.setItem(LMS_STORAGE_KEYS.STUDENT_SESSION, profile);
-        localStorage.setItem(LMS_STORAGE_KEYS.STUDENT_REMEMBER, '1');
-      } else {
-        sessionStorage.setItem(LMS_STORAGE_KEYS.STUDENT_TOKEN, token);
-        sessionStorage.setItem(LMS_STORAGE_KEYS.STUDENT_SESSION, profile);
-      }
-    } catch (e) {}
-  },
-
-  clearStudentAuth() {
-    try {
-      localStorage.removeItem(LMS_STORAGE_KEYS.STUDENT_TOKEN);
-      localStorage.removeItem(LMS_STORAGE_KEYS.STUDENT_SESSION);
-      localStorage.removeItem(LMS_STORAGE_KEYS.STUDENT_REMEMBER);
-      sessionStorage.removeItem(LMS_STORAGE_KEYS.STUDENT_TOKEN);
-      sessionStorage.removeItem(LMS_STORAGE_KEYS.STUDENT_SESSION);
-    } catch (e) {}
-  },
-
-  getTeacherToken() {
-    try {
-      return localStorage.getItem(LMS_STORAGE_KEYS.TEACHER_TOKEN) || 
-             sessionStorage.getItem(LMS_STORAGE_KEYS.TEACHER_TOKEN) || '';
-    } catch (e) { return ''; }
-  },
-
-  getTeacherProfile() {
-    try {
-      const raw = localStorage.getItem(LMS_STORAGE_KEYS.TEACHER_SESSION) || 
-                  sessionStorage.getItem(LMS_STORAGE_KEYS.TEACHER_SESSION);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  },
-
-  saveTeacherAuth(res) {
-    try {
-      const token = res?.authToken || '';
-      const profile = JSON.stringify(res?.teacher || {});
-      localStorage.setItem(LMS_STORAGE_KEYS.TEACHER_TOKEN, token);
-      localStorage.setItem(LMS_STORAGE_KEYS.TEACHER_SESSION, profile);
-      localStorage.setItem('admin_authenticated', 'true');
-      if (res?.teacher) {
-        localStorage.setItem('teacher_id', res.teacher.TeacherID || '');
-        localStorage.setItem('teacher_name', res.teacher.Name || '');
-        localStorage.setItem('teacher_role', res.teacher.Role || (res.isAdmin ? 'admin' : 'teacher'));
-      }
-    } catch (e) {}
-  },
-
-  clearTeacherAuth() {
-    try {
-      localStorage.removeItem(LMS_STORAGE_KEYS.TEACHER_TOKEN);
-      localStorage.removeItem(LMS_STORAGE_KEYS.TEACHER_SESSION);
-      localStorage.removeItem('admin_authenticated');
-      localStorage.removeItem('teacher_id');
-      localStorage.removeItem('teacher_name');
-      localStorage.removeItem('teacher_role');
-      sessionStorage.removeItem(LMS_STORAGE_KEYS.TEACHER_TOKEN);
-      sessionStorage.removeItem(LMS_STORAGE_KEYS.TEACHER_SESSION);
-    } catch (e) {}
-  },
-
-  handleAuthFailure(res, type = 'student') {
-    if (!res || !res.authRequired) return false;
-    if (type === 'teacher') {
-      this.clearTeacherAuth();
-    } else {
-      this.clearStudentAuth();
-    }
-    if (typeof Swal !== 'undefined') {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Session หมดอายุ',
-        text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
-        confirmButtonColor: type === 'teacher' ? '#059669' : '#0284c7'
-      }).then(() => {
-        this.navigateTo('login', { switch: '1' });
-      });
-    } else {
-      this.navigateTo('login', { switch: '1' });
-    }
-    return true;
-  },
-
-  // ------------------------------------------------------------------
-  // 3. Navigation Helper (รองรับ GitHub Pages และ GAS Web App)
-  // ------------------------------------------------------------------
-  navigateTo(pageName, params = {}) {
-    const isGas = (window.location.hostname.includes('script.google.com') ||
-                   window.location.hostname.includes('googleusercontent.com')) &&
-                  !window.google?.script?.run?.__isShim;
-    let targetUrl = '';
-
-    if (isGas) {
-      // สำหรับ Google Apps Script Web App ใช้ query parameter ?page=...
-      let baseUrl = window.location.href.split('?')[0].split('#')[0];
-      const sep = baseUrl.includes('?') ? '&' : '?';
-      targetUrl = baseUrl + sep + 'page=' + encodeURIComponent(pageName);
-    } else {
-      // สำหรับ GitHub Pages หรือ Static Hosting:
-      // แมปหน้าไปยังไฟล์ HTML โดยตรง เช่น student.html, admin.html, login.html
-      let filename = 'login.html';
-      if (pageName === 'index' || pageName === 'student') filename = 'student.html';
-      else if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
-      else if (pageName === 'login') filename = 'login.html';
-      else if (pageName === 'home') filename = 'login.html';
-
-      const currentPath = window.location.pathname;
-      const dir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-      targetUrl = window.location.origin + dir + filename;
-    }
-
-    if (params && typeof params === 'object') {
-      const p = new URLSearchParams();
-      Object.keys(params).forEach(k => {
-        if (params[k] !== undefined && params[k] !== null && params[k] !== '') {
-          p.set(k, String(params[k]));
-        }
-      });
-      const qs = p.toString();
-      if (qs) {
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + qs;
-      }
-    }
-
-    window.location.href = targetUrl;
-  },
-
-  // ------------------------------------------------------------------
-  // 4. File & Security Utilities
-  // ------------------------------------------------------------------
-  escapeHtml(val) {
-    return String(val ?? '').replace(/[&<>"']/g, c => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    }[c]));
-  },
-
-  safeUrl(url) {
-    const x = String(url || '').trim();
-    if (x.startsWith('data:image/')) return x;
-    try {
-      const u = new URL(x, window.location.href);
-      return (u.protocol === 'https:' || u.protocol === 'http:') ? u.href : '#';
-    } catch (e) {
-      return '#';
-    }
-  },
-
-  validateFile(file, maxMb = 25) {
-    if (!file) return 'กรุณาเลือกไฟล์';
-    if (file.size > maxMb * 1024 * 1024) return `ไฟล์มีขนาดเกิน ${maxMb}MB`;
-    const allowed = /\.(pdf|doc|docx|zip|jpg|jpeg|png|webp|xlsx|xls|pptx|txt)$/i;
-    if (!allowed.test(file.name)) return 'ชนิดไฟล์นี้ยังไม่รองรับ (รองรับ PDF, DOCX, ZIP, รูปภาพ ฯลฯ)';
-    return '';
-  },
-
-  readFileAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = err => reject(err);
-      reader.readAsDataURL(file);
-    });
-  },
-
-  // ------------------------------------------------------------------
-  // 5. System Branding & Cached Logo
-  // ------------------------------------------------------------------
-  applyLogo(logoUrl) {
-    const cleanUrl = String(logoUrl || '').trim();
-    ['studentBrandLogoImg', 'adminBrandLogoImg', 'loginBrandLogoImg', 'reportLogoImg', 'settingsLogoPreviewImg'].forEach(id => {
-      const img = document.getElementById(id);
-      if (img) {
-        if (cleanUrl) {
-          img.src = cleanUrl;
-          img.classList.remove('hidden');
-        } else {
-          img.src = '';
-          img.classList.add('hidden');
-        }
-      }
-    });
-
-    ['studentBrandLogoIcon', 'adminBrandLogoIcon', 'loginBrandLogoIcon', 'reportLogoIcon', 'settingsLogoPlaceholder'].forEach(id => {
-      const icon = document.getElementById(id);
-      if (icon) {
-        if (cleanUrl) icon.classList.add('hidden');
-        else icon.classList.remove('hidden');
-      }
-    });
-
-    try {
-      if (cleanUrl) localStorage.setItem(LMS_STORAGE_KEYS.SCHOOL_LOGO, cleanUrl);
-      else localStorage.removeItem(LMS_STORAGE_KEYS.SCHOOL_LOGO);
-    } catch (e) {}
-  },
-
-  loadCachedLogo() {
-    try {
-      const cached = localStorage.getItem(LMS_STORAGE_KEYS.SCHOOL_LOGO);
-      if (cached) this.applyLogo(cached);
-    } catch (e) {}
-  }
-};
-
-// Polyfill & Bridge for backward compatibility
-window.LMS = LMS;
-window.getStudentToken = () => LMS.getStudentToken();
-window.getTeacherToken = () => LMS.getTeacherToken();
-window.clearStudentAuth = () => LMS.clearStudentAuth();
-window.clearTeacherAuth = () => LMS.clearTeacherAuth();
-window.escapeHtml = (v) => LMS.escapeHtml(v);
-window.safeUrl = (v) => LMS.safeUrl(v);
-window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
-
-// --------------------------------------------------------------------
-// Transparent Shim for google.script.run on GitHub Pages / Localhost
-// --------------------------------------------------------------------
+<script>
 (function initGoogleScriptShim() {
   if (typeof window === 'undefined') return;
   window.google = window.google || {};
@@ -557,51 +172,18 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         return args[0];
       }
       switch (action) {
-        case 'validateSession':
-          return { authToken: args[0], expectedType: args[1] };
-        case 'getStudentData':
-          return { studentId: args[0], authToken: args[1] };
-        case 'getTeacherData':
-          return { teacherId: args[0], authToken: args[1] };
-        case 'getGradebookData':
-          return { courseId: args[0], authToken: args[1] };
-        case 'getCourseJoinInfo':
-          return { courseId: args[0], authToken: args[1] };
-        case 'enrollStudentToCourse':
-          return { courseId: args[0], authToken: args[1] };
-        case 'deleteCourse':
-          return { courseId: args[0], authToken: args[1] };
-        case 'deleteAssignment':
-          return { assignmentId: args[0], authToken: args[1] };
-        case 'deleteAnnouncement':
-          return { announcementId: args[0], authToken: args[1] };
-        case 'deleteStudent':
-          return { studentId: args[0], authToken: args[1] };
-        case 'markNotificationRead':
-          return { notificationId: args[0], authToken: args[1] };
-        case 'markAllNotificationsRead':
-          return { authToken: args[0] };
-        case 'getNotifications':
-          return { authToken: args[0], limit: args[1] };
-        case 'getChatMessages':
-          return { submissionId: args[0], assignmentId: args[1], studentId: args[2], authToken: args[3] };
-        case 'adminDbAction':
-          var base = (typeof args[1] === 'object' && args[1] !== null) ? Object.assign({}, args[1]) : {};
-          base.action = args[0];
-          base.authToken = args[2] || base.authToken;
-          return base;
-        case 'adminLogin':
-          return { password: args[0] };
-        case 'logoutSession':
-          return { authToken: args[0] };
-        case 'resetSchoolLogo':
-          return { authToken: args[0] };
-        case 'generateDemoData':
-          return { authToken: args[0] };
-        case 'clearAllDemoData':
-          return { authToken: args[0] };
-        case 'getWebAppUrl':
-          return {};
+        case 'validateSession': return { authToken: args[0], expectedType: args[1] };
+        case 'getTeacherData': return { teacherId: args[0], authToken: args[1] };
+        case 'getStudentData': return { studentId: args[0], authToken: args[1] };
+        case 'getGradebookData': return { courseId: args[0], authToken: args[1] };
+        case 'deleteCourse': return { courseId: args[0], authToken: args[1] };
+        case 'deleteAssignment': return { assignmentId: args[0], authToken: args[1] };
+        case 'deleteAnnouncement': return { announcementId: args[0], authToken: args[1] };
+        case 'deleteStudent': return { studentId: args[0], authToken: args[1] };
+        case 'markNotificationRead': return { notificationId: args[0], authToken: args[1] };
+        case 'markAllNotificationsRead': return { authToken: args[0] };
+        case 'getNotifications': return { authToken: args[0], limit: args[1] };
+        case 'logoutSession': return { authToken: args[0] };
         default:
           if (args.length === 1) {
             return typeof args[0] === 'object' && args[0] !== null ? args[0] : { value: args[0] };
@@ -613,15 +195,9 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
     function createRunner(successHandler, failureHandler) {
       var runnerObj = {
         __isShim: true,
-        withSuccessHandler: function(fn) {
-          return createRunner(fn, failureHandler);
-        },
-        withFailureHandler: function(fn) {
-          return createRunner(successHandler, fn);
-        },
-        withUserObject: function() {
-          return createRunner(successHandler, failureHandler);
-        }
+        withSuccessHandler: function(fn) { return createRunner(fn, failureHandler); },
+        withFailureHandler: function(fn) { return createRunner(successHandler, fn); },
+        withUserObject: function() { return createRunner(successHandler, failureHandler); }
       };
 
       return new Proxy(runnerObj, {
@@ -632,9 +208,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
           if (prop === 'getWebAppUrl') {
             return function() {
               var url = window.CONFIG?.API_URL || window.location.href;
-              if (typeof successHandler === 'function') {
-                setTimeout(function() { successHandler(url); }, 10);
-              }
+              if (typeof successHandler === 'function') setTimeout(function() { successHandler(url); }, 10);
               return url;
             };
           }
@@ -643,26 +217,20 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
             var args = Array.prototype.slice.call(arguments);
             var payload = normalizeArgs(prop, args);
             LMS.call(prop, payload).then(function(res) {
-              if (typeof successHandler === 'function') {
-                successHandler(res);
-              }
+              if (typeof successHandler === 'function') successHandler(res);
             }).catch(function(err) {
-              if (typeof failureHandler === 'function') {
-                failureHandler(err);
-              } else {
-                console.error('[LMS Proxy Error: ' + prop + ']', err);
-              }
+              if (typeof failureHandler === 'function') failureHandler(err);
+              else console.error('[LMS Proxy Error: ' + prop + ']', err);
             });
           };
         }
       });
     }
 
-    window.google.script.run = createRunner(null, null);
+    window.google.script.run = createRunner();
   }
 })();
-
-  </script>
+</script>
 
 </head>
 <body class="text-slate-800 antialiased selection:bg-emerald-500 selection:text-white pb-16 md:pb-8">
@@ -725,9 +293,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         </button>
 
         <!-- Student View Link -->
-        <button type="button" onclick="navigateToPage('index')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition">
-          <i class="fa-solid fa-graduation-cap"></i> <span class="hidden sm:inline">หน้านักเรียน</span>
-        </button>
+        
 
         <!-- Refresh Button -->
         <button type="button" onclick="loadTeacherDashboard()" title="รีเฟรชข้อมูล" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
@@ -1058,13 +624,18 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
               </div>
             </div>
 
-            <!-- Filters -->
+            <!-- Room Tabs & Filters -->
+            <div class="mb-4">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1.5"><i class="fa-solid fa-school text-emerald-600 mr-1"></i>เลือกห้องเรียนที่ต้องการตรวจงาน:</label>
+              <div id="gradingRoomTabs" class="flex flex-wrap items-center gap-1.5 min-h-[34px]"></div>
+            </div>
+
             <div class="flex flex-wrap items-center gap-3 mb-5">
               <input type="text" id="gradingSearchInput" onkeyup="filterGradingQueue()" placeholder="ค้นหาชื่อนักเรียน หรือรหัส..." class="form-input max-w-xs text-xs">
               <select id="gradingAsnFilter" onchange="filterGradingQueue()" class="form-input max-w-[200px] text-xs">
                 <option value="">ทุกงานที่มอบหมาย</option>
               </select>
-              <select id="gradingClassFilter" onchange="filterGradingQueue()" class="form-input max-w-[140px] text-xs">
+              <select id="gradingClassFilter" onchange="onGradingClassFilterChange(this.value)" class="form-input max-w-[150px] text-xs">
                 <option value="">ทุกห้องเรียน</option>
               </select>
               <select id="gradingStatusFilter" onchange="filterGradingQueue()" class="form-input max-w-[140px] text-xs">
@@ -1120,11 +691,16 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
               </div>
             </div>
 
-            <!-- Class & Search Filter -->
+            <!-- Room Tabs & Filters -->
+            <div class="mb-4">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1.5"><i class="fa-solid fa-users text-emerald-600 mr-1"></i>เลือกห้องเรียนเพื่อดูรายชื่อนักเรียน:</label>
+              <div id="studentRoomTabs" class="flex flex-wrap items-center gap-1.5 min-h-[34px]"></div>
+            </div>
+
             <div class="flex flex-wrap items-center gap-3 mb-5">
               <input type="text" id="studentSearchInput" onkeyup="filterStudentsGrid()" placeholder="ค้นหาตามชื่อ หรือรหัสนักเรียน..." class="form-input max-w-xs text-xs">
-              <select id="studentClassFilter" onchange="filterStudentsGrid()" class="form-input max-w-[150px] text-xs">
-                <option value="">ทุกห้องเรียน</option>
+              <select id="studentClassFilter" onchange="onStudentClassFilterChange(this.value)" class="form-input max-w-[160px] text-xs">
+                <option value="">เลือกห้องเรียน</option>
               </select>
             </div>
 
@@ -1455,54 +1031,6 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- 0. ตั้งค่ารูปภาพโปรไฟล์ครูผู้สอน (Teacher Profile Photo) -->
-              <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-emerald-50/70 via-white to-sky-50/50 rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-4">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-emerald-100/80 pb-3">
-                  <div>
-                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                      <i class="fa-solid fa-user-circle text-emerald-600"></i> รูปโปรไฟล์ครูผู้สอน (Teacher Profile Photo)
-                    </h4>
-                    <p class="text-xs text-slate-500 mt-0.5">เปลี่ยนรูปภาพโปรไฟล์ของคุณที่แสดงในเมนูด้านข้าง แถบด้านบน และรายงานต่าง ๆ</p>
-                  </div>
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100/70 text-emerald-800 border border-emerald-200">
-                    <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> Google Drive Cloud Storage
-                  </span>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
-                  <div class="lg:col-span-3 flex flex-col items-center text-center space-y-2">
-                    <div class="relative group cursor-pointer" onclick="document.getElementById('settingsTeacherAvatarInput').click()">
-                      <img id="settingsTeacherAvatarPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' fill='%2310b981'><circle cx='64' cy='64' r='64' fill='%23ecfdf5'/><path d='M64 64a24 24 0 100-48 24 24 0 000 48zm0 12c-26.7 0-48 16.3-48 36.5 0 2.5 2 4.5 4.5 4.5h87c2.5 0 4.5-2 4.5-4.5 0-20.2-21.3-36.5-48-36.5z'/></svg>" alt="Teacher Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-emerald-200 shadow-lg shadow-emerald-600/10">
-                      <div class="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
-                        <i class="fa-solid fa-camera mr-1"></i> เปลี่ยนรูป
-                      </div>
-                    </div>
-                    <span class="text-[11px] font-semibold text-slate-500">รูปโปรไฟล์ปัจจุบัน</span>
-                  </div>
-
-                  <div class="lg:col-span-9 space-y-3">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <input type="file" id="settingsTeacherAvatarInput" accept="image/png,image/jpeg,image/webp,image/gif" onchange="onSelectTeacherAvatar(event)" class="hidden">
-                      <button type="button" onclick="document.getElementById('settingsTeacherAvatarInput').click()" class="flex-grow flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-emerald-50/50 hover:bg-emerald-50 rounded-xl text-xs font-semibold text-emerald-800 transition cursor-pointer">
-                        <i class="fa-solid fa-folder-open text-emerald-600"></i>
-                        <span id="settingsTeacherAvatarBtnText">คลิกเพื่อเลือกรูปถ่าย / รูปภาพโปรไฟล์ครู</span>
-                      </button>
-                    </div>
-                    <div id="settingsTeacherAvatarFileInfo" class="hidden text-xs text-emerald-700 font-medium px-2 py-1 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-1.5">
-                      <i class="fa-solid fa-file-image"></i> <span></span>
-                    </div>
-                    <div>
-                      <input type="url" id="settingsTeacherAvatarUrlInput" placeholder="หรือระบุ Image URL โดยตรง (เช่น ลิงก์รูปภาพ)" class="form-input text-xs w-full">
-                    </div>
-                    <div class="pt-1">
-                      <button type="button" onclick="saveTeacherAvatarFromSettings()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกรูปโปรไฟล์ครู
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               
               <!-- 1. การตั้งค่าภาคเรียน -->
               <div class="bg-slate-50/70 rounded-2xl p-4 border border-slate-100">
@@ -1665,8 +1193,8 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         <span>ระบบจัดการเรียนรู้และส่งงานออนไลน์</span>
       </div>
       <div class="flex items-center gap-1.5 font-medium">
-        <span>พัฒนาระบบ โดย</span>
-        <span class="text-teal-800 font-bold bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200 shadow-sm">Jessica_P.</span>
+        <span>พัฒนาโดย</span>
+        <span class="text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-200 shadow-sm">Jiraphat Systems</span>
       </div>
     </footer>
   </div>
@@ -1954,26 +1482,6 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       </div>
 
       <form onsubmit="handleTeacherProfileSubmit(event)" class="p-6 space-y-4">
-        <!-- Teacher Avatar Upload & Live Preview -->
-        <div class="flex flex-col items-center justify-center p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 mb-2">
-          <div class="relative group cursor-pointer" onclick="document.getElementById('profTeacherAvatarInput').click()">
-            <img id="profTeacherAvatarPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' fill='%2310b981'><circle cx='64' cy='64' r='64' fill='%23ecfdf5'/><path d='M64 64a24 24 0 100-48 24 24 0 000 48zm0 12c-26.7 0-48 16.3-48 36.5 0 2.5 2 4.5 4.5 4.5h87c2.5 0 4.5-2 4.5-4.5 0-20.2-21.3-36.5-48-36.5z'/></svg>" alt="Teacher Avatar" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md shadow-emerald-600/15">
-            <div class="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
-              <i class="fa-solid fa-camera mr-1"></i> เปลี่ยนรูป
-            </div>
-            <button type="button" class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shadow-md border-2 border-white hover:bg-emerald-700 transition">
-              <i class="fa-solid fa-camera"></i>
-            </button>
-          </div>
-          <input type="file" id="profTeacherAvatarInput" accept="image/png,image/jpeg,image/webp,image/gif" onchange="onSelectTeacherAvatar(event)" class="hidden">
-          <div class="mt-2 text-center">
-            <button type="button" onclick="document.getElementById('profTeacherAvatarInput').click()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 underline">
-              คลิกเพื่อเลือกรูปภาพจากเครื่อง
-            </button>
-            <p class="text-[10px] text-slate-400 mt-0.5">รองรับไฟล์ภาพ JPG, PNG, WebP (บันทึกลง Google Drive)</p>
-          </div>
-        </div>
-
         <!-- Switch Account Dropdown (if multiple teachers exist) -->
         <div id="teacherAccountSelectorContainer" class="hidden bg-emerald-50/70 p-3 rounded-xl border border-emerald-100">
           <label class="text-xs font-bold text-emerald-800 block mb-1">สลับบัญชีครูผู้สอน:</label>
@@ -2179,25 +1687,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
     let currentGradeAttachedFile = null;
 
     // Initialization
-        document.addEventListener('DOMContentLoaded', () => {
-      // 0ms Instant First Paint: Render cached teacher profile immediately
-      try {
-        const cachedProfile = JSON.parse(localStorage.getItem('teacher_session') || sessionStorage.getItem('teacher_session') || '{}');
-        if (cachedProfile.Name) {
-          const sName = document.getElementById('sidebarTeacherName');
-          if (sName) sName.innerHTML = cachedProfile.Name + ' <i class="fa-solid fa-pen-to-square text-[10px] text-slate-400"></i>';
-          const sClass = document.getElementById('sidebarTeacherClass');
-          if (sClass) sClass.textContent = (cachedProfile.Subject || 'วิชาการ') + ' (' + (cachedProfile.ClassResponsible || 'ทุกระดับชั้น') + ')';
-          const sAvatar = document.getElementById('sidebarAvatar');
-          if (sAvatar && cachedProfile.AvatarUrl) sAvatar.src = cachedProfile.AvatarUrl;
-          const tTopName = document.getElementById('topTeacherName');
-          if (tTopName) tTopName.innerHTML = cachedProfile.Name + ' <i class="fa-solid fa-pen text-[9px] text-slate-400"></i>';
-          const tTopAvatar = document.getElementById('topTeacherAvatar');
-          if (tTopAvatar && cachedProfile.AvatarUrl) tTopAvatar.src = cachedProfile.AvatarUrl;
-        }
-        const cachedLogo = localStorage.getItem('schoolLogo');
-        if (cachedLogo && typeof applySystemLogo === 'function') applySystemLogo(cachedLogo);
-      } catch(e) {}
+    document.addEventListener('DOMContentLoaded', () => {
       const token = getTeacherToken();
       if (!token || typeof google === 'undefined' || !google.script || !google.script.run) {
         navigateToPage('login');
@@ -2427,6 +1917,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       renderReportsView();
       initAnalyticsCharts(data.analytics);
       populateFilterOptions();
+      try { renderGradingRoomTabs(); renderStudentRoomTabs(); } catch(e) {}
       applyPermissionUI();
     }
 
@@ -2581,6 +2072,32 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       }).join('');
     }
 
+    function renderGradingRoomTabs() {
+      const wrap = document.getElementById('gradingRoomTabs');
+      if (!wrap) return;
+      const current = document.getElementById('gradingClassFilter')?.value || '';
+      const rooms = [...new Set((allStudents || []).map(s => String(s.Class || '').trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric:true}));
+      
+      let html = '<button type="button" onclick="onGradingClassFilterChange(\'\')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition ' + (!current ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50') + '"><i class="fa-solid fa-list-check mr-1"></i>ทุกห้อง (' + (allSubmissions || []).length + ')</button>';
+      
+      rooms.forEach(rm => {
+        const count = (allSubmissions || []).filter(sub => {
+          const st = (allStudents || []).find(x => String(x.StudentID).trim() === String(sub.StudentID).trim());
+          return String(sub.Class || st?.Class || '').trim() === rm;
+        }).length;
+        const active = current === rm;
+        html += '<button type="button" onclick="onGradingClassFilterChange(\'' + escapeHtml(rm) + '\')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition ' + (active ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50') + '"><i class="fa-solid fa-school mr-1"></i>' + escapeHtml(rm) + ' (' + count + ')</button>';
+      });
+      wrap.innerHTML = html;
+    }
+
+    function onGradingClassFilterChange(cls) {
+      const sel = document.getElementById('gradingClassFilter');
+      if (sel) sel.value = cls;
+      renderGradingRoomTabs();
+      renderGradingQueue();
+    }
+
     function renderGradingQueue() {
       const tbody = document.getElementById('gradingQueueTableBody');
       if (!tbody) return;
@@ -2591,10 +2108,15 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       const statusFilter = document.getElementById('gradingStatusFilter')?.value || '';
 
       const filtered = allSubmissions.filter(s => {
-        const matchSearch = (s.StudentName || '').toLowerCase().includes(search) || (s.StudentID || '').toLowerCase().includes(search);
-        const matchAsn = !asnFilter || s.AssignmentID === asnFilter;
-        const matchClass = !clsFilter || s.Class === clsFilter;
-        const matchStatus = !statusFilter || s.Status === statusFilter;
+        const student = (allStudents || []).find(st => String(st.StudentID).trim() === String(s.StudentID).trim());
+        const studentClass = String(s.Class || student?.Class || '').trim();
+        const studentName = String(s.StudentName || student?.Name || '').toLowerCase();
+        const studentId = String(s.StudentID || '').toLowerCase();
+
+        const matchSearch = studentName.includes(search) || studentId.includes(search);
+        const matchAsn = !asnFilter || String(s.AssignmentID) === String(asnFilter);
+        const matchClass = !clsFilter || studentClass === clsFilter;
+        const matchStatus = !statusFilter || String(s.Status) === String(statusFilter);
         return matchSearch && matchAsn && matchClass && matchStatus;
       });
 
@@ -3189,8 +2711,9 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       };
 
       popSelect('asnClassFilter', 'ทุกระดับชั้น');
-      popSelect('gradingClassFilter', 'ทุกห้องเรียน');
-      popSelect('studentClassFilter', 'ทุกห้องเรียน');
+      popSelect('gradingClassFilter', 'ทุกห้องเรียน (รวมทั้งหมด)');
+      popSelect('studentClassFilter', 'ทุกห้องเรียน (รวมทั้งหมด)');
+      try { renderGradingRoomTabs(); renderStudentRoomTabs(); } catch(e) {}
       popSelect('rptFilterClass', '-- ทุกห้องเรียน / ทุกระดับชั้น --');
 
       // Populate Teachers for Report Filter
@@ -3473,131 +2996,31 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
     }
 
     
-    // ====================================================================
-    // Teacher Avatar Upload & Settings Logic
-    // ====================================================================
-    let selectedTeacherAvatarBase64 = null;
+let selectedTeacherAvatarBase64 = null;
+function handleTeacherAvatarSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    return Swal.fire('ไฟล์ใหญ่เกินไป', 'รูปภาพต้องมีขนาดไม่เกิน 10MB', 'warning');
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    selectedTeacherAvatarBase64 = ev.target.result;
+    const img = document.getElementById('tchModalAvatarImg');
+    const icon = document.getElementById('tchModalAvatarIcon');
+    if (img) { img.src = selectedTeacherAvatarBase64; img.classList.remove('hidden'); }
+    if (icon) icon.classList.add('hidden');
+  };
+  reader.readAsDataURL(file);
+}
 
-    function onSelectTeacherAvatar(e) {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (file.size > 10 * 1024 * 1024) {
-        return Swal.fire('ขนาดไฟล์เกินกำหนด', 'กรุณาเลือกไฟล์ภาพขนาดไม่เกิน 10MB', 'warning');
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        selectedTeacherAvatarBase64 = evt.target.result;
-
-        const prev1 = document.getElementById('profTeacherAvatarPreview');
-        if (prev1) prev1.src = selectedTeacherAvatarBase64;
-
-        const prev2 = document.getElementById('settingsTeacherAvatarPreview');
-        if (prev2) prev2.src = selectedTeacherAvatarBase64;
-
-        const finfo = document.getElementById('settingsTeacherAvatarFileInfo');
-        if (finfo) {
-          finfo.classList.remove('hidden');
-          finfo.querySelector('span').textContent = 'เลือกไฟล์: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function saveTeacherAvatarFromSettings() {
-      const urlInput = document.getElementById('settingsTeacherAvatarUrlInput');
-      const inputUrl = urlInput ? urlInput.value.trim() : '';
-
-      if (!selectedTeacherAvatarBase64 && !inputUrl) {
-        return Swal.fire('กรุณาเลือกรูปภาพ', 'โปรดอัปโหลดไฟล์ภาพ หรือระบุ Image URL เพื่อบันทึก', 'warning');
-      }
-
-      showSplashLoading('กำลังบันทึกรูปโปรไฟล์ครู...', 'กำลังอัปโหลดเข้าสู่ Google Drive ความเร็วสูง');
-
-      const payload = {
-        authToken: getTeacherToken(),
-        teacherId: currentTeacherData?.teacher?.TeacherID || localStorage.getItem('teacher_id') || 'TCH-001'
-      };
-
-      if (selectedTeacherAvatarBase64) {
-        payload.base64Avatar = selectedTeacherAvatarBase64;
-        payload.fileName = 'teacher_' + payload.teacherId + '_' + Date.now() + '.png';
-      } else if (inputUrl) {
-        payload.avatarUrl = inputUrl;
-      }
-
-      const onDone = (res) => {
-        hideSplashLoading();
-        if (handleTeacherAuthFailure(res)) return;
-        if (res && res.success) {
-          const newUrl = res.avatarUrl || selectedTeacherAvatarBase64 || inputUrl;
-          if (currentTeacherData && currentTeacherData.teacher) {
-            currentTeacherData.teacher.AvatarUrl = newUrl;
-          }
-          const sAvatar = document.getElementById('sidebarAvatar');
-          if (sAvatar) sAvatar.src = newUrl;
-          const tTopAvatar = document.getElementById('topTeacherAvatar');
-          if (tTopAvatar) tTopAvatar.src = newUrl;
-          const prev1 = document.getElementById('settingsTeacherAvatarPreview');
-          if (prev1) prev1.src = newUrl;
-          const prev2 = document.getElementById('profTeacherAvatarPreview');
-          if (prev2) prev2.src = newUrl;
-
-          try {
-            const sess = JSON.parse(localStorage.getItem('teacher_session') || sessionStorage.getItem('teacher_session') || '{}');
-            sess.AvatarUrl = newUrl;
-            localStorage.setItem('teacher_session', JSON.stringify(sess));
-          } catch(e) {}
-
-          selectedTeacherAvatarBase64 = null;
-          const finfo = document.getElementById('settingsTeacherAvatarFileInfo');
-          if (finfo) finfo.classList.add('hidden');
-          if (urlInput) urlInput.value = '';
-
-          Swal.fire({
-            icon: 'success',
-            title: 'บันทึกรูปโปรไฟล์ครูสำเร็จ!',
-            text: 'ระบบได้อัปเดตรูปภาพโปรไฟล์เรียบร้อยแล้ว',
-            timer: 2000,
-            showConfirmButton: false
-          });
-        } else {
-          Swal.fire('เกิดข้อผิดพลาด', res ? res.message : 'ไม่สามารถบันทึกรูปโปรไฟล์ได้', 'error');
-        }
-      };
-
-      if (typeof google !== 'undefined' && google.script && google.script.run && !google.script.run.__isShim) {
-        google.script.run
-          .withSuccessHandler(onDone)
-          .withFailureHandler(err => {
-            hideSplashLoading();
-            Swal.fire('เกิดข้อผิดพลาด', err.toString(), 'error');
-          })
-          .updateTeacherProfile(payload);
-      } else if (window.LMS) {
-        LMS.call('updateTeacherProfile', payload)
-          .then(onDone)
-          .catch(err => {
-            hideSplashLoading();
-            Swal.fire('เกิดข้อผิดพลาด', err.toString(), 'error');
-          });
-      }
-    }
-
-    function openTeacherProfileModal() {
+function openTeacherProfileModal() {
       const tch = currentTeacherData?.teacher || {};
       document.getElementById('profTeacherName').value = tch.Name || '';
       document.getElementById('profTeacherSubject').value = tch.Subject || '';
       document.getElementById('profTeacherClass').value = tch.ClassResponsible || '';
       document.getElementById('profTeacherEmail').value = tch.Email || '';
       document.getElementById('profTeacherPassword').value = '';
-      selectedTeacherAvatarBase64 = null;
-      const curAvatar = tch.AvatarUrl || DEFAULT_TEACHER_AVATAR;
-      const prevProfImg = document.getElementById('profTeacherAvatarPreview');
-      if (prevProfImg) prevProfImg.src = curAvatar;
-      const prevSetImg = document.getElementById('settingsTeacherAvatarPreview');
-      if (prevSetImg) prevSetImg.src = curAvatar;
 
       const selCont = document.getElementById('teacherAccountSelectorContainer');
       const sel = document.getElementById('teacherAccountSelector');
@@ -3725,6 +3148,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
     function handleCreateAssignmentSubmit(e) {
       e.preventDefault();
       const payload = {
+        base64Avatar: selectedTeacherAvatarBase64,
         authToken: getTeacherToken(),
         title: document.getElementById('newAsnTitle').value.trim(),
         subject: document.getElementById('newAsnSubject').value.trim(),
@@ -3817,10 +3241,6 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         email: document.getElementById('profTeacherEmail').value.trim(),
         password: document.getElementById('profTeacherPassword').value.trim()
       };
-      if (selectedTeacherAvatarBase64) {
-        payload.base64Avatar = selectedTeacherAvatarBase64;
-        payload.fileName = 'teacher_' + payload.teacherId + '.png';
-      }
 
       closeModal('teacherProfileModal');
       showSplashLoading('กำลังบันทึกโปรไฟล์...', 'กรุณารอสักครู่');
@@ -3831,20 +3251,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
             hideSplashLoading();
             if (handleTeacherAuthFailure(res)) return;
             if (res && res.success) {
-              if (res.avatarUrl) {
-                if (currentTeacherData && currentTeacherData.teacher) currentTeacherData.teacher.AvatarUrl = res.avatarUrl;
-                const sAvatar = document.getElementById('sidebarAvatar');
-                if (sAvatar) sAvatar.src = res.avatarUrl;
-                const tTopAvatar = document.getElementById('topTeacherAvatar');
-                if (tTopAvatar) tTopAvatar.src = res.avatarUrl;
-                try {
-                  const sess = JSON.parse(localStorage.getItem('teacher_session') || '{}');
-                  sess.AvatarUrl = res.avatarUrl;
-                  localStorage.setItem('teacher_session', JSON.stringify(sess));
-                } catch(e) {}
-              }
-              Swal.fire({ icon: 'success', title: 'บันทึกโปรไฟล์และรูปภาพสำเร็จ!', timer: 1500, showConfirmButton: false });
-              selectedTeacherAvatarBase64 = null;
+              Swal.fire({ icon: 'success', title: 'บันทึกโปรไฟล์สำเร็จ!', timer: 1400, showConfirmButton: false });
               loadTeacherDashboard();
             } else {
               Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res ? res.message : '' });
@@ -4395,34 +3802,122 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       loadTeacherDashboard(tid);
     }
 
-        function redirectTeacherToLoginAfterLogout_() {
-      clearTeacherAuth();
-      if (window.LMS && typeof LMS.clearTeacherAuth === 'function') LMS.clearTeacherAuth();
-      navigateToPage('login', { logout: '1', switch: '1' });
+    function getCurrentWebAppBaseUrl_() {
+      // URL จริงของ Web App จาก ScriptApp.getService().getUrl()
+      const serverUrl = String("<?= url ?>" || '').trim();
+
+      if (
+        serverUrl.startsWith('http') &&
+        !serverUrl.includes('googleusercontent.com')
+      ) {
+        return serverUrl;
+      }
+
+      try {
+        const href = String(window.top?.location?.href || window.location.href || '');
+        const base = href.split('?')[0].split('#')[0];
+
+        if (
+          base.startsWith('http') &&
+          !base.includes('googleusercontent.com') &&
+          (
+            base.includes('script.google.com') ||
+            base.includes('script.googleusercontent.com/macros/')
+          )
+        ) {
+          return base;
+        }
+      } catch(e) {}
+
+      return '';
     }
 
-    function logoutTeacher() {
-      Swal.fire({
-        title: 'ออกจากระบบ?',
-        text: 'คุณต้องการออกจากระบบจัดการสำหรับครูใช่หรือไม่',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: '<i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> ออกจากระบบ',
-        cancelButtonText: 'ยกเลิก',
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#64748b',
-        reverseButtons: true,
-        customClass: {
-          popup: 'rounded-3xl shadow-2xl',
-          confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
-          cancelButton: 'rounded-xl text-xs font-semibold px-4 py-2.5'
+    function redirectTeacherToLoginAfterLogout_() {
+      const query = 'page=login&logout=1';
+
+      const doRedirect = (base) => {
+        base = String(base || '').trim();
+
+        if (
+          !base.startsWith('http') ||
+          base.includes('googleusercontent.com')
+        ) {
+          return false;
         }
+
+        const target =
+          base.split('?')[0].split('#')[0] +
+          '?' + query;
+
+        try {
+          const a = document.createElement('a');
+          a.href = target;
+          a.target = '_top';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          return true;
+        } catch(e) {}
+
+        try {
+          window.top.location.href = target;
+          return true;
+        } catch(e) {}
+
+        return false;
+      };
+
+      const base = getCurrentWebAppBaseUrl_();
+      if (doRedirect(base)) return;
+
+      try {
+        google.script.run
+          .withSuccessHandler(url => {
+            if (!doRedirect(url)) {
+              document.body.innerHTML =
+                '<div style="font-family:sans-serif;padding:40px;text-align:center">' +
+                '<h3>ออกจากระบบแล้ว</h3>' +
+                '<p>กรุณาปิดแท็บนี้แล้วเปิดลิงก์ระบบใหม่</p>' +
+                '</div>';
+            }
+          })
+          .withFailureHandler(() => {
+            document.body.innerHTML =
+              '<div style="font-family:sans-serif;padding:40px;text-align:center">' +
+              '<h3>ออกจากระบบแล้ว</h3>' +
+              '<p>กรุณาปิดแท็บนี้แล้วเปิดลิงก์ระบบใหม่</p>' +
+              '</div>';
+          })
+          .getWebAppUrl();
+      } catch(e) {}
+    }
+
+    function redirectToLoginAfterLogout_(extraParams) {
+      clearTeacherAuth();
+      if (window.LMS && typeof LMS.clearTeacherAuth === 'function') LMS.clearTeacherAuth();
+      const params = Object.assign({ logout: '1', switch: '1' }, extraParams || {});
+      if (window.LMS && typeof LMS.navigateTo === 'function') {
+        LMS.navigateTo('login', params);
+      } else {
+        const q = new URLSearchParams(params).toString();
+        window.location.href = 'login.html' + (q ? '?' + q : '');
+      }
+    }
+function logoutTeacher() {
+      Swal.fire({
+        title:'ออกจากระบบ?',
+        icon:'question',
+        showCancelButton:true,
+        confirmButtonText:'ออกจากระบบ',
+        cancelButtonText:'ยกเลิก',
+        confirmButtonColor:'#ef4444'
       }).then(r => {
         if (!r.isConfirmed) return;
 
         const token = getTeacherToken();
+
+        // ล้าง Token ในเครื่องก่อนทันที
         clearTeacherAuth();
-        if (window.LMS && typeof LMS.clearTeacherAuth === 'function') LMS.clearTeacherAuth();
 
         let redirected = false;
         const goLogin = () => {
@@ -4431,24 +3926,26 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
           redirectTeacherToLoginAfterLogout_();
         };
 
-        const fallbackTimer = setTimeout(goLogin, 600);
+        // ป้องกัน callback จาก Apps Script ค้าง
+        const fallbackTimer = setTimeout(goLogin, 700);
 
-        if (token) {
+        if (
+          typeof google !== 'undefined' &&
+          google.script &&
+          google.script.run &&
+          token
+        ) {
           try {
-            if (typeof google !== 'undefined' && google.script && google.script.run && !google.script.run.__isShim) {
-              google.script.run
-                .withSuccessHandler(() => { clearTimeout(fallbackTimer); goLogin(); })
-                .withFailureHandler(() => { clearTimeout(fallbackTimer); goLogin(); })
-                .logoutSession(token);
-            } else if (window.LMS) {
-              LMS.call('logoutSession', { authToken: token }).finally(() => {
+            google.script.run
+              .withSuccessHandler(() => {
                 clearTimeout(fallbackTimer);
                 goLogin();
-              });
-            } else {
-              clearTimeout(fallbackTimer);
-              goLogin();
-            }
+              })
+              .withFailureHandler(() => {
+                clearTimeout(fallbackTimer);
+                goLogin();
+              })
+              .logoutSession(token);
           } catch(e) {
             clearTimeout(fallbackTimer);
             goLogin();
@@ -4461,23 +3958,24 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
     }
 
     function navigateToPage(pageName, params) {
-      if (window.LMS && typeof window.LMS.navigateTo === 'function') {
-        return window.LMS.navigateTo(pageName, params);
+      let baseUrl = "<?= url ?>";
+      if (!baseUrl || baseUrl.trim() === '' || !baseUrl.startsWith('http')) {
+        baseUrl = window.location.href.split('?')[0].split('#')[0];
       }
-
-      let filename = 'login.html';
-      if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
-      else if (pageName === 'student' || pageName === 'index') filename = 'student.html';
-      else if (pageName === 'login' || pageName === 'home') filename = 'login.html';
-
-      const currentPath = window.location.pathname;
-      const dir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-      let targetUrl = window.location.origin + dir + filename;
+      const sep = baseUrl.includes('?') ? '&' : '?';
+      let targetUrl = baseUrl + sep + 'page=' + encodeURIComponent(pageName);
       if (params && typeof params === 'object') {
-        const qs = new URLSearchParams(params).toString();
-        if (qs) targetUrl += (targetUrl.includes('?') ? '&' : '?') + qs;
+        Object.keys(params).forEach(k => {
+          if (params[k]) targetUrl += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+        });
       }
       showSplashLoading('กำลังเปลี่ยนหน้า...', 'กรุณารอสักครู่');
+      try {
+        if (window.top && window.top.location) {
+          window.top.location.href = targetUrl;
+          return;
+        }
+      } catch(e) {}
       window.location.href = targetUrl;
     }
 
@@ -4630,11 +4128,11 @@ function v2GradebookView(){
         <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center"><i class="fa-solid fa-table-cells"></i></div>
         <div>
           <h2 class="text-lg font-extrabold text-slate-900">สมุดคะแนน Gradebook รายห้อง</h2>
-          <p class="text-xs text-slate-500">นักเรียน × งาน × กลางภาค × ปลายภาค พร้อมคะแนนรวมและเฉลี่ย</p>
+          <p class="text-xs text-slate-500">รายชื่อนักเรียนแยกตามห้องเรียน พร้อมคะแนนเก็บแต่ละงาน คะแนนรวม และตัดเกรดอัตโนมัติ</p>
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="v2OpenExamModal()" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold"><i class="fa-solid fa-file-pen mr-1"></i> เพิ่มการสอบ</button>
+        
         <button onclick="v2ExportGradebook('csv')" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">CSV</button>
         <button onclick="v2ExportGradebook('xlsx')" class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">Excel</button>
         <button onclick="v2ExportGradebook('pdf')" class="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold">PDF</button>
@@ -4685,10 +4183,7 @@ function v2GradebookView(){
     </div>
   </div>
 
-  <div>
-    <h3 class="text-sm font-bold text-slate-800 mb-2"><i class="fa-solid fa-pen-to-square text-indigo-600 mr-1"></i> จัดการคะแนนสอบ</h3>
-    <div id="v2ExamCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
-  </div>`;
+`;
   return d;
 }
 function v2InjectAdvancedFilters(){const a=document.getElementById('view-assignments');if(a){const existing=a.querySelector('.glass-card');const box=document.createElement('div');box.className='glass-card rounded-2xl p-3 border border-white';box.innerHTML='<div class="grid grid-cols-1 md:grid-cols-2 gap-2"><select id="v2AsnCourseFilter" onchange="v2AdminState.assignmentCourse=this.value;renderAssignmentsList()" class="form-input text-xs"><option value="">ทุกรายวิชา</option></select><select id="v2AsnWindowFilter" onchange="renderAssignmentsList()" class="form-input text-xs"><option value="">ทุกช่วงเวลา</option><option value="open">กำลังเปิดรับ</option><option value="not_open">ยังไม่เปิด</option><option value="closed">ปิดรับ</option></select></div>';a.insertBefore(box,existing||a.firstChild);}
@@ -4793,7 +4288,7 @@ function v2CreateAdminModals(){const wrap=document.createElement('div');wrap.inn
 function v2Open(id){const e=document.getElementById(id);if(e){e.classList.remove('hidden');e.classList.add('flex');}}function v2Close(id){const e=document.getElementById(id);if(e){e.classList.add('hidden');e.classList.remove('flex');}}
 
 const v2OriginalTeacherData=onTeacherDataLoaded;
-onTeacherDataLoaded=function(data){v2OriginalTeacherData(data);if(data&&data.success!==false){v2AdminState.courses=data.courses||[];v2AdminState.exams=data.exams||[];v2AdminState.roomDashboards=data.roomDashboards||[];v2AdminState.notifications=data.notifications||[];v2ApplyAdminData(data);}};
+onTeacherDataLoaded=function(data){v2OriginalTeacherData(data);if(data&&data.success!==false){v2AdminState.courses=data.courses||[];v2AdminState.exams=data.exams||[];v2AdminState.examScores=data.examScores||[];v2AdminState.roomDashboards=data.roomDashboards||[];v2AdminState.notifications=data.notifications||[];v2ApplyAdminData(data);}};
 function v2ApplyAdminData(data){v2EnsureAdminUi();v2PopulateCourseSelectors();v2RenderCourses();v2RenderRoomDashboard();v2RenderAdminNotifications();const n=data.stats?.unreadNotifications||0;[['v2AdminNotiBadge',n],['v2MobileAdminNoti',n]].forEach(([id,c])=>{const e=document.getElementById(id);if(e){e.textContent=c;e.classList.toggle('hidden',!c);if(c)e.classList.add('flex');}});const b=document.getElementById('navBadgeMessages');if(b)b.textContent=data.stats?.unreadMessages||0;}
 function v2PopulateCourseSelectors(){
   const opts=v2AdminState.courses.map(c=>`<option value="${escapeHtml(c.CourseID)}">${escapeHtml(c.CourseCode||'')} ${escapeHtml(c.CourseName||c.Subject)} (${escapeHtml(c.ClassName||'')})</option>`).join('');
@@ -4810,40 +4305,59 @@ function v2PopulateCourseSelectors(){
   v2PopulateGradebookSubjects();
 }
 function v2CourseSubjectKey(c){return String(c.Subject||c.CourseName||c.CourseCode||c.CourseID||'').trim();}
+
 function v2PopulateGradebookSubjects(){
   const sel=document.getElementById('v2GradebookSubject'); if(!sel)return;
-  const courses=v2AdminState.courses||[];
-  const keys=[...new Set(courses.map(v2CourseSubjectKey).filter(Boolean))];
-  const old=sel.value;
-  sel.innerHTML='<option value="">เลือกรายวิชา</option>'+keys.map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
-  if(keys.includes(old))sel.value=old; else if(keys.length===1)sel.value=keys[0];
-  const current=document.getElementById('v2GradebookCourse')?.value||'';
-  if(current){const c=courses.find(x=>String(x.CourseID)===String(current));if(c)sel.value=v2CourseSubjectKey(c);}
+  const subjects = [...new Set(
+    (allAssignments || []).map(a => String(a.Subject || '').trim())
+      .concat((v2AdminState.courses || []).map(c => String(c.Subject || c.CourseName || '').trim()))
+      .concat(currentTeacherData?.teacher?.Subject ? [String(currentTeacherData.teacher.Subject).trim()] : [])
+      .filter(Boolean)
+  )].sort();
+  const old = sel.value;
+  sel.innerHTML = '<option value="">ทุกรายวิชา</option>' + subjects.map(k => '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>').join('');
+  if (subjects.includes(old)) sel.value = old;
   v2RenderGradebookRoomTabs();
 }
+
 function v2GradebookSubjectChanged(){
-  const key=document.getElementById('v2GradebookSubject')?.value||'';
-  const matches=(v2AdminState.courses||[]).filter(c=>v2CourseSubjectKey(c)===key);
-  const hidden=document.getElementById('v2GradebookCourse'); if(hidden)hidden.value=matches[0]?.CourseID||'';
   v2RenderGradebookRoomTabs();
-  if(matches.length)v2LoadGradebook(); else{v2AdminState.gradebook=null;v2RenderGradebook();}
+  v2BuildAndRenderGradebook();
 }
+
 function v2RenderGradebookRoomTabs(){
-  const wrap=document.getElementById('v2GradebookRoomTabs'); if(!wrap)return;
-  const key=document.getElementById('v2GradebookSubject')?.value||'';
-  const current=document.getElementById('v2GradebookCourse')?.value||'';
-  const rooms=(v2AdminState.courses||[]).filter(c=>!key||v2CourseSubjectKey(c)===key).slice().sort((a,b)=>String(a.ClassName||'').localeCompare(String(b.ClassName||''),'th',{numeric:true}));
-  if(!rooms.length){wrap.innerHTML='<span class="text-xs text-slate-400">ยังไม่มีห้องเรียนในรายวิชานี้</span>';return;}
-  wrap.innerHTML=rooms.map(c=>{
-    const active=String(c.CourseID)===String(current);
-    return `<button type="button" onclick="v2SelectGradebookRoom('${escapeHtml(c.CourseID)}')" class="px-4 py-2 rounded-xl text-xs font-extrabold border transition ${active?'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/20':'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200'}"><i class="fa-solid fa-school mr-1"></i>${escapeHtml(c.ClassName||'ไม่ระบุห้อง')}</button>`;
+  const wrap = document.getElementById('v2GradebookRoomTabs'); if(!wrap)return;
+  const studentRooms = [...new Set(
+    (allStudents || []).map(s => String(s.Class || '').trim())
+      .concat((v2AdminState.courses || []).map(c => String(c.ClassName || '').trim()))
+      .filter(Boolean)
+  )].sort((a,b) => a.localeCompare(b, 'th', {numeric:true}));
+
+  if (!v2AdminState.selectedRoom) {
+    v2AdminState.selectedRoom = studentRooms[0] || 'ALL';
+  }
+  const current = v2AdminState.selectedRoom;
+
+  if (!studentRooms.length) {
+    wrap.innerHTML = '<span class="text-xs text-slate-400">ยังไม่มีข้อมูลนักเรียน/ห้องเรียนในระบบ</span>';
+    return;
+  }
+
+  let html = '<button type="button" onclick="v2SelectGradebookRoom(\'ALL\')" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border transition ' + (current==='ALL'?'bg-indigo-600 border-indigo-600 text-white shadow-sm':'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200') + '"><i class="fa-solid fa-users mr-1"></i>ทุกห้อง (' + (allStudents||[]).length + ' คน)</button>';
+
+  html += studentRooms.map(rm => {
+    const active = current === rm;
+    const cnt = (allStudents || []).filter(s => String(s.Class || '').trim() === rm).length;
+    return '<button type="button" onclick="v2SelectGradebookRoom(\'' + escapeHtml(rm) + '\')" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border transition ' + (active?'bg-indigo-600 border-indigo-600 text-white shadow-sm':'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200') + '"><i class="fa-solid fa-school mr-1"></i>' + escapeHtml(rm) + ' (' + cnt + ' คน)</button>';
   }).join('');
+
+  wrap.innerHTML = html;
 }
-function v2SelectGradebookRoom(courseId){
-  const hidden=document.getElementById('v2GradebookCourse'); if(hidden)hidden.value=courseId;
-  const c=(v2AdminState.courses||[]).find(x=>String(x.CourseID)===String(courseId));
-  if(c){const subject=document.getElementById('v2GradebookSubject');if(subject)subject.value=v2CourseSubjectKey(c);}
-  v2RenderGradebookRoomTabs(); v2LoadGradebook();
+
+function v2SelectGradebookRoom(roomName){
+  v2AdminState.selectedRoom = roomName;
+  v2RenderGradebookRoomTabs();
+  v2BuildAndRenderGradebook();
 }
 function v2RenderCourses(){const q=(document.getElementById('v2CourseSearch')?.value||'').toLowerCase();const g=document.getElementById('v2CoursesGrid');if(!g)return;const rows=v2AdminState.courses.filter(c=>(String(c.CourseCode||'')+' '+String(c.CourseName||'')+' '+String(c.Subject||'')+' '+String(c.ClassName||'')+' '+String(c.TeacherName||'')).toLowerCase().includes(q));g.innerHTML=rows.length?rows.map(c=>`<div class="glass-card rounded-2xl p-5 border border-slate-100"><div class="flex justify-between gap-2"><div><div class="text-[10px] font-bold text-emerald-700">${escapeHtml(c.CourseCode||c.CourseID)}</div><h3 class="text-sm font-bold text-slate-900 mt-1">${escapeHtml(c.CourseName||c.Subject)}</h3><p class="text-xs text-slate-500 mt-1">${escapeHtml(c.Subject)} • ${escapeHtml(c.ClassName)} • ${escapeHtml(c.TeacherName)}</p><p class="text-[10px] text-slate-400 mt-1">${escapeHtml(c.Semester||'')} / ${escapeHtml(c.AcademicYear||'')}</p><div class="flex flex-wrap gap-1.5 mt-2 text-[9px] font-bold"><span class="px-2 py-1 rounded-lg bg-sky-50 text-sky-700">งาน ${escapeHtml(c.AssignmentWeight||60)}%</span><span class="px-2 py-1 rounded-lg bg-amber-50 text-amber-700">กลาง ${escapeHtml(c.MidtermWeight||20)}%</span><span class="px-2 py-1 rounded-lg bg-violet-50 text-violet-700">ปลาย ${escapeHtml(c.FinalWeight||20)}%</span></div></div><div class="flex gap-1"><button onclick="v2ShowQr('${escapeHtml(c.CourseID)}')" class="w-8 h-8 rounded-xl bg-sky-50 text-sky-700"><i class="fa-solid fa-qrcode"></i></button><button onclick="v2EditCourse('${escapeHtml(c.CourseID)}')" class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700"><i class="fa-solid fa-pen"></i></button></div></div><div class="mt-4 flex gap-2"><button onclick="document.getElementById('v2GradebookCourse').value='${escapeHtml(c.CourseID)}';switchView('gradebook');v2LoadGradebook()" class="flex-1 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold">Gradebook</button><button onclick="v2OpenImportModal('${escapeHtml(c.CourseID)}')" class="flex-1 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Import รายชื่อ</button></div></div>`).join(''):'<div class="col-span-full py-12 text-center text-slate-400">ยังไม่มีรายวิชา/ห้องเรียน</div>';}
 function v27UpdateWeightTotal(){
@@ -5135,480 +4649,374 @@ function v2SaveExam(){
     loadTeacherDashboard(); setTimeout(v2LoadGradebook,300);
   }).saveExam({authToken:getTeacherToken(),courseId:document.getElementById('v2ExamCourse').value,title:document.getElementById('v2ExamTitle').value,examType:document.getElementById('v2ExamType').value,maxScore:document.getElementById('v2ExamMax').value,examDate:document.getElementById('v2ExamDate').value,weightPercent:document.getElementById('v2ExamWeight').value});
 }
-function v2LoadGradebook(){
-  let id=document.getElementById('v2GradebookCourse')?.value||'';
-  if(!id){
-    v2PopulateGradebookSubjects();
-    const key=document.getElementById('v2GradebookSubject')?.value||'';
-    const first=(v2AdminState.courses||[]).find(c=>!key||v2CourseSubjectKey(c)===key);
-    if(first){id=first.CourseID;document.getElementById('v2GradebookCourse').value=id;document.getElementById('v2GradebookSubject').value=v2CourseSubjectKey(first);v2RenderGradebookRoomTabs();}
+function v2BuildAndRenderGradebook(){
+  const selectedRoom = v2AdminState.selectedRoom || 'ALL';
+  const selectedSubject = document.getElementById('v2GradebookSubject')?.value || '';
+
+  // 1. Filter students by selected room
+  let students = (allStudents || []).slice();
+  if (selectedRoom !== 'ALL' && selectedRoom !== 'ทุกห้อง') {
+    students = students.filter(s => String(s.Class || '').trim() === selectedRoom);
   }
-  if(!id){v2AdminState.gradebook=null;v2RenderGradebook();return;}
-  v2AdminState.courseId=id;
-  showSplashLoading('กำลังโหลด Gradebook...','กำลังรวมคะแนนงาน กลางภาค และปลายภาคของห้องนี้');
-  google.script.run.withSuccessHandler(r=>{
-    hideSplashLoading();
-    if(!r?.success)return Swal.fire('โหลด Gradebook ไม่สำเร็จ',r?.message||'','error');
-    v2AdminState.gradebook=r;
-    const c=r.course||{};
-    const subject=document.getElementById('v2GradebookSubject');if(subject)subject.value=v2CourseSubjectKey(c);
-    document.getElementById('v2GradebookCourse').value=c.CourseID||id;
-    v2RenderGradebookRoomTabs();v2RenderGradebook();
-  }).withFailureHandler(e=>{hideSplashLoading();Swal.fire('โหลด Gradebook ไม่สำเร็จ',e.toString(),'error');}).getGradebookData(id,getTeacherToken());
-}
-function v2SplitStudentName(fullName){
-  let s=String(fullName||'').trim();
-  const prefixes=['เด็กชาย','เด็กหญิง','นางสาว','นาย','นาง','ด.ช.','ด.ญ.'];let prefix='';
-  for(const p of prefixes){if(s.startsWith(p)){prefix=p;s=s.slice(p.length).trim();break;}}
-  const parts=s.split(/\s+/).filter(Boolean);let first='',last='';
-  if(parts.length<=1)first=parts[0]||'';else{last=parts.pop();first=parts.join(' ');}
-  return{prefix,first,last};
-}
-function v2GradeCell(score,max,itemType,itemId,studentId,source){
-  const missing=
-    score===''||
-    score===null||
-    typeof score==='undefined'||
-    Number.isNaN(Number(score));
+  students.sort((a, b) => {
+    const na = Number(a.Number || 9999), nb = Number(b.Number || 9999);
+    if (na !== nb) return na - nb;
+    return String(a.Name || '').localeCompare(String(b.Name || ''), 'th');
+  });
 
-  const value=missing?'':Number(score);
-  const bg=missing
-    ?'bg-rose-500'
-    :'bg-emerald-400';
-
-  const title=source==='gradebook'
-    ?'คะแนนกรอกจาก Gradebook • คลิกเพื่อแก้ไข'
-    :source==='submission'
-      ?'คะแนนจากงานที่ส่ง • คลิกเพื่อแก้ไข'
-      :'คลิกเพื่อกรอกคะแนน';
-
-  return `<td class="gb-score-cell ${bg} p-0" title="${title}">
-    <input
-      type="number"
-      min="0"
-      max="${escapeHtml(max)}"
-      step="0.5"
-      value="${missing?'':escapeHtml(value)}"
-      data-old="${missing?'':escapeHtml(value)}"
-      data-max="${escapeHtml(max)}"
-      data-item-type="${escapeHtml(itemType)}"
-      data-item-id="${escapeHtml(itemId)}"
-      data-student-id="${escapeHtml(studentId)}"
-      onfocus="v29GradeCellFocus(this)"
-      onkeydown="v29GradeCellKeydown(event,this)"
-      onblur="v29GradeCellBlur(this)"
-      class="w-full h-full min-h-[33px] bg-transparent text-center font-black outline-none px-1
-        ${missing?'text-white placeholder:text-white/80':'text-slate-950'}
-        focus:bg-white focus:text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
-      placeholder="-"
-      aria-label="คะแนน ${escapeHtml(value)} เต็ม ${escapeHtml(max)}">
-  </td>`;
-}
-
-
-let v29GradeSavingCount=0;
-
-function v29SetGradeStatus(message,type='idle'){
-  const el=document.getElementById('v29GradeSaveStatus');
-  if(!el)return;
-
-  const cls={
-    idle:'text-slate-400',
-    saving:'text-indigo-300',
-    success:'text-emerald-300',
-    error:'text-rose-300'
-  }[type]||'text-slate-400';
-
-  el.className=`text-[10px] font-bold ${cls}`;
-  el.innerHTML=message;
-}
-
-function v29GradeCellFocus(el){
-  el.dataset.old=el.value;
-  try{
-    el.select();
-  }catch(e){}
-}
-
-function v29GradeCellKeydown(ev,el){
-  if(ev.key==='Enter'){
-    ev.preventDefault();
-    el.blur();
-    return;
+  // 2. Filter assignments by selected subject and room
+  let assignments = (allAssignments || []).slice();
+  if (selectedSubject) {
+    assignments = assignments.filter(a => String(a.Subject || '').trim() === selectedSubject);
+  }
+  if (selectedRoom !== 'ALL' && selectedRoom !== 'ทุกห้อง') {
+    assignments = assignments.filter(a => {
+      const target = String(a.TargetClasses || '').trim();
+      if (!target || target === 'ทุกห้อง' || target === 'ทุกระดับชั้น') return true;
+      return target.split(',').map(x => x.trim()).includes(selectedRoom);
+    });
   }
 
-  if(ev.key==='Escape'){
-    ev.preventDefault();
-    el.value=el.dataset.old||'';
-    el.blur();
-  }
-}
+  // น้ำหนักคะแนน: งาน 60%, กลางภาค 20%, ปลายภาค 20% รวม 100%
+  const weights = { assignment: 60, midterm: 20, final: 20 };
+  const totalMaxScore = assignments.reduce((sum, a) => sum + Number(a.MaxScore || 0), 0);
+  let classWeightedSum = 0;
 
-function v29GradeCellBlur(el){
-  if(el.dataset.saving==='1')return;
+  const rows = students.map(student => {
+    const studentId = String(student.StudentID || '').trim();
+    const studentSubs = (allSubmissions || []).filter(sub => String(sub.StudentID || '').trim() === studentId);
+    
+    const assignmentScores = {};
+    const assignmentScoreSources = {};
+    let studentTotal = 0;
+    let missingCount = 0;
 
-  const oldValue=String(el.dataset.old??'').trim();
-  const raw=String(el.value??'').trim();
-
-  if(raw===oldValue)return;
-
-  const max=Number(el.dataset.max||0);
-
-  if(raw!==''){
-    const score=Number(raw);
-
-    if(
-      !Number.isFinite(score)||
-      score<0||
-      score>max
-    ){
-      el.value=oldValue;
-      v29SetGradeStatus(
-        `<i class="fa-solid fa-circle-xmark mr-1"></i>คะแนนต้องอยู่ระหว่าง 0–${max}`,
-        'error'
-      );
-      return;
-    }
-  }
-
-  el.dataset.saving='1';
-  el.disabled=true;
-  el.classList.add('opacity-60');
-  v29GradeSavingCount++;
-
-  v29SetGradeStatus(
-    '<i class="fa-solid fa-spinner fa-spin mr-1"></i>กำลังบันทึกคะแนน...',
-    'saving'
-  );
-
-  google.script.run
-    .withSuccessHandler(res=>{
-      el.dataset.saving='0';
-      el.disabled=false;
-      el.classList.remove('opacity-60');
-      v29GradeSavingCount=Math.max(0,v29GradeSavingCount-1);
-
-      if(!res?.success){
-        el.value=oldValue;
-        v29SetGradeStatus(
-          `<i class="fa-solid fa-circle-xmark mr-1"></i>${escapeHtml(res?.message||'บันทึกไม่สำเร็จ')}`,
-          'error'
-        );
-        return;
+    assignments.forEach(a => {
+      const aid = String(a.AssignmentID || '').trim();
+      const localGrade = v2AdminState.customGradeScores?.[studentId + '_' + aid];
+      const sub = studentSubs.find(s => String(s.AssignmentID || '').trim() === aid);
+      
+      let score = '';
+      let source = '';
+      if (localGrade !== undefined && localGrade !== null && localGrade !== '') {
+        score = Number(localGrade);
+        source = 'gradebook';
+      } else if (sub && sub.Score !== '' && sub.Score !== null && sub.Score !== undefined) {
+        score = Number(sub.Score);
+        source = 'submission';
       }
 
-      const saved=
-        res.score===''||
-        res.score===null||
-        typeof res.score==='undefined'
-          ?''
-          :Number(res.score);
-
-      v29ApplyLocalGradeScore(
-        el.dataset.studentId,
-        el.dataset.itemType,
-        el.dataset.itemId,
-        saved
-      );
-
-      v29SetGradeStatus(
-        '<i class="fa-solid fa-circle-check mr-1"></i>บันทึกแล้ว',
-        'success'
-      );
-
-      setTimeout(()=>{
-        if(v29GradeSavingCount===0){
-          v29SetGradeStatus(
-            '<i class="fa-solid fa-pen-to-square mr-1"></i>คลิกช่องคะแนนเพื่อแก้ไข',
-            'idle'
-          );
-        }
-      },1200);
-    })
-    .withFailureHandler(err=>{
-      el.dataset.saving='0';
-      el.disabled=false;
-      el.classList.remove('opacity-60');
-      el.value=oldValue;
-      v29GradeSavingCount=Math.max(0,v29GradeSavingCount-1);
-
-      v29SetGradeStatus(
-        `<i class="fa-solid fa-circle-xmark mr-1"></i>${escapeHtml(String(err))}`,
-        'error'
-      );
-    })
-    .saveGradebookCellScore({
-      authToken:getTeacherToken(),
-      courseId:v2AdminState.gradebook?.course?.CourseID||
-        document.getElementById('v2GradebookCourse')?.value||
-        '',
-      itemType:el.dataset.itemType,
-      itemId:el.dataset.itemId,
-      studentId:el.dataset.studentId,
-      score:raw
+      if (score !== '' && !isNaN(score)) {
+        assignmentScores[a.AssignmentID] = score;
+        studentTotal += score;
+      } else {
+        assignmentScores[a.AssignmentID] = '';
+        missingCount++;
+      }
+      assignmentScoreSources[a.AssignmentID] = source;
     });
-}
 
-function v29ApplyLocalGradeScore(studentId,itemType,itemId,score){
-  const d=v2AdminState.gradebook;
-  if(!d)return;
+    // คะแนนสอบกลางภาค (Midterm)
+    const midLocal = v2AdminState.customGradeScores?.[studentId + '_midterm'];
+    const midFromDb = (v2AdminState.examScores || []).find(x => String(x.StudentID).trim() === studentId && (String(x.ExamID).includes('mid') || String(x.ExamID).includes('กลาง')));
+    const midtermScore = (midLocal !== undefined && midLocal !== null && midLocal !== '') 
+      ? Number(midLocal) 
+      : (midFromDb && midFromDb.Score !== '' && midFromDb.Score !== null ? Number(midFromDb.Score) : '');
 
-  const row=(d.rows||[]).find(
-    r=>String(r.student?.StudentID)===String(studentId)
-  );
+    // คะแนนสอบปลายภาค (Final)
+    const finLocal = v2AdminState.customGradeScores?.[studentId + '_final'];
+    const finFromDb = (v2AdminState.examScores || []).find(x => String(x.StudentID).trim() === studentId && (String(x.ExamID).includes('fin') || String(x.ExamID).includes('ปลาย')));
+    const finalScore = (finLocal !== undefined && finLocal !== null && finLocal !== '') 
+      ? Number(finLocal) 
+      : (finFromDb && finFromDb.Score !== '' && finFromDb.Score !== null ? Number(finFromDb.Score) : '');
 
-  if(!row)return;
+    if (midtermScore === '') missingCount++;
+    if (finalScore === '') missingCount++;
 
-  if(itemType==='assignment'){
-    row.assignmentScores=row.assignmentScores||{};
-    row.assignmentScores[itemId]=score;
-  }else if(itemType==='exam'){
-    row.examScores=row.examScores||{};
-    row.examScores[itemId]=score;
-  }
+    // คำนวณคะแนนถ่วงน้ำหนัก
+    const asnWeighted = totalMaxScore > 0 ? (studentTotal / totalMaxScore) * weights.assignment : 0;
+    const midWeighted = midtermScore !== '' ? Number(midtermScore) : 0;
+    const finWeighted = finalScore !== '' ? Number(finalScore) : 0;
+    const grandTotal = Math.round((asnWeighted + midWeighted + finWeighted) * 100) / 100;
 
-  v29RecalculateGradeRow(row,d);
+    let gradeLabel = '0';
+    if (grandTotal >= 80) gradeLabel = '4';
+    else if (grandTotal >= 75) gradeLabel = '3.5';
+    else if (grandTotal >= 70) gradeLabel = '3';
+    else if (grandTotal >= 65) gradeLabel = '2.5';
+    else if (grandTotal >= 60) gradeLabel = '2';
+    else if (grandTotal >= 55) gradeLabel = '1.5';
+    else if (grandTotal >= 50) gradeLabel = '1';
+    else gradeLabel = '0';
 
-  if(d.rows?.length){
-    d.classAverage=Math.round(
-      d.rows.reduce(
-        (sum,r)=>sum+Number(r.weightedTotal||0),
-        0
-      )/d.rows.length*10
-    )/10;
-  }
+    classWeightedSum += grandTotal;
+
+    return {
+      student: student,
+      assignmentScores: assignmentScores,
+      assignmentScoreSources: assignmentScoreSources,
+      assignmentTotal: Math.round(studentTotal * 100) / 100,
+      assignmentMaxTotal: Math.round(totalMaxScore * 100) / 100,
+      assignmentWeighted: Math.round(asnWeighted * 100) / 100,
+      midtermScore: midtermScore,
+      finalScore: finalScore,
+      weightedTotal: grandTotal,
+      gradeLabel: gradeLabel,
+      missingCount: missingCount
+    };
+  });
+
+  const classAverage = rows.length ? Math.round((classWeightedSum / rows.length) * 100) / 100 : 0;
+
+  v2AdminState.gradebook = {
+    course: {
+      ClassName: selectedRoom === 'ALL' ? 'ทุกห้องเรียน' : selectedRoom,
+      Subject: selectedSubject || 'ทุกรายวิชา',
+      TeacherName: currentTeacherData?.teacher?.Name || 'ครูผู้สอน'
+    },
+    weights: weights,
+    assignments: assignments,
+    rows: rows,
+    classAverage: classAverage,
+    totalMaxScore: totalMaxScore
+  };
 
   v2RenderGradebook();
 }
 
-function v29RecalculateGradeRow(row,d){
-  const assignments=d.assignments||[];
-  const exams=d.exams||[];
-  const w=d.weights||{
-    assignment:60,
-    midterm:20,
-    final:20
-  };
+function v2LoadGradebook(){
+  v2PopulateGradebookSubjects();
+  v2RenderGradebookRoomTabs();
+  v2BuildAndRenderGradebook();
+}
 
-  const scoreValue=v=>{
-    if(
-      v===''||
-      v===null||
-      typeof v==='undefined'||
-      Number.isNaN(Number(v))
-    )return null;
-    return Number(v);
-  };
+function v22RecalculateRow(row, d) {
+  const assignments = d.assignments || [];
+  const weights = d.weights || { assignment: 60, midterm: 20, final: 20 };
+  const totalMax = d.totalMaxScore || assignments.reduce((s, a) => s + Number(a.MaxScore || 0), 0);
 
-  let assignmentEarned=0;
-  let assignmentMax=0;
-  let otherEarned=0;
-  let otherMax=0;
-  let midEarned=0;
-  let midMax=0;
-  let finalEarned=0;
-  let finalMax=0;
-  let missing=0;
+  let earned = 0;
+  let missing = 0;
 
-  assignments.forEach(a=>{
-    assignmentMax+=Number(a.MaxScore||0);
-    const v=scoreValue(row.assignmentScores?.[a.AssignmentID]);
-
-    if(v===null)missing++;
-    else assignmentEarned+=v;
+  assignments.forEach(a => {
+    const v = row.assignmentScores?.[a.AssignmentID];
+    if (v === '' || v === null || typeof v === 'undefined' || isNaN(Number(v))) missing++;
+    else earned += Number(v);
   });
 
-  exams.forEach(e=>{
-    const t=String(e.ExamType||'');
-    const max=Number(e.MaxScore||0);
-    const v=scoreValue(row.examScores?.[e.ExamID]);
+  const asnWeighted = totalMax > 0 ? (earned / totalMax) * weights.assignment : 0;
+  const midVal = row.midtermScore !== '' && row.midtermScore !== null && typeof row.midtermScore !== 'undefined' ? Number(row.midtermScore) : 0;
+  const finVal = row.finalScore !== '' && row.finalScore !== null && typeof row.finalScore !== 'undefined' ? Number(row.finalScore) : 0;
 
-    if(t.includes('กลาง')){
-      midMax+=max;
-      if(v===null)missing++;
-      else midEarned+=v;
-    }else if(t.includes('ปลาย')){
-      finalMax+=max;
-      if(v===null)missing++;
-      else finalEarned+=v;
-    }else{
-      otherMax+=max;
-      if(v===null)missing++;
-      else otherEarned+=v;
-    }
-  });
+  if (row.midtermScore === '' || row.midtermScore === null || typeof row.midtermScore === 'undefined') missing++;
+  if (row.finalScore === '' || row.finalScore === null || typeof row.finalScore === 'undefined') missing++;
 
-  const weighted=(earned,max,weight)=>
-    max>0
-      ?Math.round((earned/max*Number(weight||0))*100)/100
-      :0;
+  const grandTotal = Math.round((asnWeighted + midVal + finVal) * 100) / 100;
 
-  row.assignmentTotal=assignmentEarned+otherEarned;
-  row.assignmentMax=assignmentMax+otherMax;
-  row.midtermTotal=midEarned;
-  row.midtermMax=midMax;
-  row.finalTotal=finalEarned;
-  row.finalMax=finalMax;
+  row.assignmentTotal = Math.round(earned * 100) / 100;
+  row.assignmentWeighted = Math.round(asnWeighted * 100) / 100;
+  row.weightedTotal = grandTotal;
+  row.missingCount = missing;
 
-  row.assignmentWeighted=weighted(
-    assignmentEarned+otherEarned,
-    assignmentMax+otherMax,
-    w.assignment
-  );
+  const p = grandTotal;
+  row.gradeLabel =
+    p >= 80 ? '4' :
+    p >= 75 ? '3.5' :
+    p >= 70 ? '3' :
+    p >= 65 ? '2.5' :
+    p >= 60 ? '2' :
+    p >= 55 ? '1.5' :
+    p >= 50 ? '1' : '0';
 
-  row.midtermWeighted=weighted(
-    midEarned,
-    midMax,
-    w.midterm
-  );
+  row.gradePoint = Number(row.gradeLabel);
+}
 
-  row.finalWeighted=weighted(
-    finalEarned,
-    finalMax,
-    w.final
-  );
-
-  row.weightedTotal=Math.round((
-    row.assignmentWeighted+
-    row.midtermWeighted+
-    row.finalWeighted
-  )*100)/100;
-
-  row.totalEarned=row.weightedTotal;
-  row.totalMax=100;
-  row.averagePercent=row.weightedTotal;
-  row.missingCount=missing;
-
-  const p=row.weightedTotal;
-
-  row.gradeLabel=
-    p>=80?'4':
-    p>=75?'3.5':
-    p>=70?'3':
-    p>=65?'2.5':
-    p>=60?'2':
-    p>=55?'1.5':
-    p>=50?'1':'0';
-
-  row.gradePoint=Number(row.gradeLabel);
+function v29RecalculateGradeRow(row, d) {
+  v22RecalculateRow(row, d);
 }
 
 function v2RenderGradebook(){
-  const d=v2AdminState.gradebook;
-  const h=document.getElementById('v2GradebookHead');
-  const b=document.getElementById('v2GradebookBody');
-  const cards=document.getElementById('v2ExamCards');
-  const meta=document.getElementById('v2GradebookMeta');
+  const d = v2AdminState.gradebook;
+  const h = document.getElementById('v2GradebookHead');
+  const b = document.getElementById('v2GradebookBody');
+  const meta = document.getElementById('v2GradebookMeta');
 
-  if(!h||!b)return;
+  if(!h||!b) return;
 
   if(!d){
-    h.innerHTML='';
-    b.innerHTML='<tr><td class="p-10 text-center text-slate-400">เลือกรายวิชาและห้องเรียนเพื่อเปิดสมุดคะแนน</td></tr>';
-    if(cards)cards.innerHTML='';
-    if(meta)meta.classList.add('hidden');
+    h.innerHTML = '';
+    b.innerHTML = '<tr><td class="p-10 text-center text-slate-400">เลือกรายวิชาและห้องเรียนเพื่อเปิดสมุดคะแนน</td></tr>';
+    if(meta) meta.classList.add('hidden');
     return;
   }
 
-  if(meta)meta.classList.remove('hidden');
+  if(meta) meta.classList.remove('hidden');
 
-  const course=d.course||{};
-  const w=d.weights||{assignment:60,midterm:20,final:20};
-  const q=(document.getElementById('v2GradeSearch')?.value||'').trim().toLowerCase();
-  const result=document.getElementById('v2GradeResult')?.value||'';
+  const course = d.course || {};
+  const weights = d.weights || { assignment: 60, midterm: 20, final: 20 };
+  const q = (document.getElementById('v2GradeSearch')?.value || '').trim().toLowerCase();
+  const result = document.getElementById('v2GradeResult')?.value || '';
 
-  let rows=(d.rows||[]).slice().sort((a,b)=>
-    Number(a.student?.Number||9999)-Number(b.student?.Number||9999)||
-    String(a.student?.Name||'').localeCompare(String(b.student?.Name||''),'th')
+  let rows = (d.rows || []).slice().sort((a,b) =>
+    Number(a.student?.Number || 9999) - Number(b.student?.Number || 9999) ||
+    String(a.student?.Name || '').localeCompare(String(b.student?.Name || ''), 'th')
   );
 
-  rows=rows.filter(r=>{
-    const hay=(String(r.student?.Name||'')+' '+String(r.student?.StudentID||'')).toLowerCase();
-    if(q&&!hay.includes(q))return false;
-    if(result==='missing'&&Number(r.missingCount||0)<=0)return false;
-    if(result==='low'&&Number(r.weightedTotal||0)>=50)return false;
-    if(result==='high'&&Number(r.weightedTotal||0)<80)return false;
+  rows = rows.filter(r => {
+    const hay = (String(r.student?.Name || '') + ' ' + String(r.student?.StudentID || '') + ' ' + String(r.student?.Class || '')).toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    if (result === 'missing' && Number(r.missingCount || 0) <= 0) return false;
+    if (result === 'low' && Number(r.weightedTotal || 0) >= 50) return false;
+    if (result === 'high' && Number(r.weightedTotal || 0) < 80) return false;
     return true;
   });
 
-  const assignments=d.assignments||[];
-  const exams=d.exams||[];
-  const mid=exams.filter(e=>String(e.ExamType||'').includes('กลาง'));
-  const fin=exams.filter(e=>String(e.ExamType||'').includes('ปลาย'));
-  const other=exams.filter(e=>!mid.includes(e)&&!fin.includes(e));
-  const ordered=[...mid,...fin,...other];
+  const assignments = d.assignments || [];
 
-  document.getElementById('v2GbRoom').textContent=course.ClassName||'-';
-  document.getElementById('v2GbStudents').textContent=(d.rows?.length||0)+' คน';
-  document.getElementById('v2GbMax').textContent='100 คะแนน';
-  document.getElementById('v2GbAverage').textContent=Number(d.classAverage||0)+'%';
-  document.getElementById('v2GbTitle').textContent=(course.CourseCode?course.CourseCode+' • ':'')+(course.CourseName||course.Subject||'สมุดคะแนน')+' — '+(course.ClassName||'');
-  document.getElementById('v2GbSubtitle').textContent=`งาน ${w.assignment}% • กลางภาค ${w.midterm}% • ปลายภาค ${w.final}% • ครูผู้สอน ${course.TeacherName||currentTeacherData?.teacher?.Name||'-'}`;
+  document.getElementById('v2GbRoom').textContent = course.ClassName || '-';
+  document.getElementById('v2GbStudents').textContent = (d.rows?.length || 0) + ' คน';
+  document.getElementById('v2GbMax').textContent = '100 คะแนน';
+  document.getElementById('v2GbAverage').textContent = Number(d.classAverage || 0) + '%';
+  document.getElementById('v2GbTitle').textContent = 'สมุดคะแนน Gradebook — ' + (course.ClassName || '');
+  document.getElementById('v2GbSubtitle').textContent = 'งาน ' + weights.assignment + '% • กลางภาค ' + weights.midterm + '% • ปลายภาค ' + weights.final + '% • รองรับคัดลอกวางคะแนนจาก Excel ทั้งแถว/คอลัมน์';
 
-  const fixed='<th class="gb-fixed px-2 py-2 text-center">เลขที่</th><th class="gb-fixed px-2 py-2 text-center">รหัส</th><th class="gb-fixed px-2 py-2 text-center">คำนำหน้า</th><th class="gb-fixed px-2 py-2 text-left">ชื่อ</th><th class="gb-fixed px-2 py-2 text-left">สกุล</th><th class="gb-fixed px-2 py-2 text-center">ห้อง</th>';
+  const fixed = '<th class="gb-fixed px-2 py-2 text-center">เลขที่</th><th class="gb-fixed px-2 py-2 text-center">รหัส</th><th class="gb-fixed px-2 py-2 text-center">คำนำหน้า</th><th class="gb-fixed px-2 py-2 text-left">ชื่อ</th><th class="gb-fixed px-2 py-2 text-left">สกุล</th><th class="gb-fixed px-2 py-2 text-center">ห้อง</th>';
 
-  const ah=assignments.map((a,i)=>`<th class="gb-score-head bg-blue-50 text-blue-900" title="${escapeHtml(a.Title)}"><div class="gb-score-title">งาน ${i+1} • ${escapeHtml(a.Title)}</div><div class="mt-1 text-[9px] font-black">${escapeHtml(a.MaxScore)}</div></th>`).join('');
+  const ah = assignments.map((a,i) => '<th class="gb-score-head bg-blue-50 text-blue-900" title="' + escapeHtml(a.Title) + '"><div class="gb-score-title">งาน ' + (i+1) + ' • ' + escapeHtml(a.Title) + '</div><div class="mt-1 text-[9px] font-black">' + escapeHtml(a.MaxScore) + '</div></th>').join('');
 
-  const eh=ordered.map(e=>{
-    const t=String(e.ExamType||'');
-    const cls=t.includes('กลาง')?'bg-amber-50 text-amber-900':t.includes('ปลาย')?'bg-violet-50 text-violet-900':'bg-indigo-50 text-indigo-900';
-    return `<th class="gb-score-head ${cls}" title="${escapeHtml(e.Title)}"><div class="gb-score-title">${escapeHtml(e.ExamType||'สอบ')} • ${escapeHtml(e.Title)}</div><div class="mt-1 text-[9px] font-black">${escapeHtml(e.MaxScore)}</div></th>`;
-  }).join('');
+  // คอลัมน์สอบกลางภาค และ ปลายภาค
+  const midHead = '<th class="gb-score-head bg-amber-50 text-amber-900" title="คะแนนสอบกลางภาค"><div class="gb-score-title">สอบกลางภาค</div><div class="mt-1 text-[9px] font-black">' + weights.midterm + '</div></th>';
+  const finHead = '<th class="gb-score-head bg-violet-50 text-violet-900" title="คะแนนสอบปลายภาค"><div class="gb-score-title">สอบปลายภาค</div><div class="mt-1 text-[9px] font-black">' + weights.final + '</div></th>';
 
-  h.innerHTML=`<tr class="bg-slate-100 text-slate-700">${fixed}${ah}${eh}<th class="px-3 py-2 bg-sky-100 text-sky-900 text-center">งาน<div class="text-[9px]">/${w.assignment}</div></th><th class="px-3 py-2 bg-amber-100 text-amber-900 text-center">กลาง<div class="text-[9px]">/${w.midterm}</div></th><th class="px-3 py-2 bg-violet-100 text-violet-900 text-center">ปลาย<div class="text-[9px]">/${w.final}</div></th><th class="px-3 py-2 bg-emerald-100 text-emerald-900 text-center">รวม<div class="text-[9px]">/100</div></th><th class="px-3 py-2 bg-cyan-100 text-cyan-900 text-center">เกรด</th></tr>`;
+  h.innerHTML = '<tr class="bg-slate-100 text-slate-700">' + fixed + ah +
+    '<th class="px-3 py-2 bg-sky-100 text-sky-900 text-center">รวมงาน<div class="text-[9px]">/' + weights.assignment + '</div></th>' +
+    midHead + finHead +
+    '<th class="px-3 py-2 bg-emerald-100 text-emerald-900 text-center">รวมทั้งหมด<div class="text-[9px]">/100</div></th>' +
+    '<th class="px-3 py-2 bg-cyan-100 text-cyan-900 text-center">เกรด</th>' +
+  '</tr>';
 
   if(!rows.length){
-    b.innerHTML=`<tr><td colspan="${11+assignments.length+ordered.length}" class="p-10 text-center text-slate-400">ไม่พบนักเรียนตามเงื่อนไข</td></tr>`;
-  }else{
-    b.innerHTML=rows.map(r=>{
-      const n=v2SplitStudentName(r.student?.Name||'');
-      const asn=assignments.map(a=>v2GradeCell(
+    b.innerHTML = '<tr><td colspan="' + (11 + assignments.length) + '" class="p-10 text-center text-slate-400">ไม่พบนักเรียนตามเงื่อนไข</td></tr>';
+  } else {
+    b.innerHTML = rows.map(r => {
+      const n = v2SplitStudentName(r.student?.Name || '');
+      const asn = assignments.map(a => v2GradeCell(
         r.assignmentScores?.[a.AssignmentID],
         a.MaxScore,
         'assignment',
         a.AssignmentID,
         r.student?.StudentID,
-        r.assignmentScoreSources?.[a.AssignmentID]||''
+        r.assignmentScoreSources?.[a.AssignmentID] || ''
       )).join('');
-      const ex=ordered.map(e=>v2GradeCell(
-        r.examScores?.[e.ExamID],
-        e.MaxScore,
-        'exam',
-        e.ExamID,
-        r.student?.StudentID,
-        'exam'
-      )).join('');
-      const total=Number(r.weightedTotal||0);
-      return `<tr class="bg-white"><td class="gb-fixed px-2 py-2 text-center font-bold">${escapeHtml(r.student?.Number||'')}</td><td class="gb-fixed px-2 py-2 text-center font-mono">${escapeHtml(r.student?.StudentID||'')}</td><td class="gb-fixed px-2 py-2 text-center">${escapeHtml(n.prefix)}</td><td class="gb-fixed px-2 py-2 font-semibold whitespace-nowrap">${escapeHtml(n.first)}</td><td class="gb-fixed px-2 py-2 font-semibold whitespace-nowrap">${escapeHtml(n.last)}</td><td class="gb-fixed px-2 py-2 text-center font-bold">${escapeHtml(r.student?.Class||course.ClassName||'')}</td>${asn}${ex}<td class="px-3 py-2 text-center font-black bg-sky-50 text-sky-800">${Number(r.assignmentWeighted||0).toFixed(2)}</td><td class="px-3 py-2 text-center font-black bg-amber-50 text-amber-800">${Number(r.midtermWeighted||0).toFixed(2)}</td><td class="px-3 py-2 text-center font-black bg-violet-50 text-violet-800">${Number(r.finalWeighted||0).toFixed(2)}</td><td class="px-3 py-2 text-center font-black bg-emerald-100 text-emerald-900">${total.toFixed(2)}</td><td class="px-3 py-2 text-center font-black ${total>=80?'bg-emerald-100 text-emerald-800':total>=50?'bg-amber-100 text-amber-800':'bg-rose-100 text-rose-800'}">${escapeHtml(r.gradeLabel??'0')}</td></tr>`;
-    }).join('');
-  }
 
-  if(cards){
-    cards.innerHTML=ordered.length?ordered.map(e=>`<div class="p-4 rounded-2xl border ${String(e.ExamType||'').includes('กลาง')?'bg-amber-50 border-amber-200':String(e.ExamType||'').includes('ปลาย')?'bg-violet-50 border-violet-200':'bg-indigo-50 border-indigo-200'}"><div class="text-[10px] font-bold text-slate-600">${escapeHtml(e.ExamType||'สอบ')}</div><div class="font-bold text-sm text-slate-900 mt-1">${escapeHtml(e.Title)}</div><div class="text-[11px] text-slate-500 mt-1">${escapeHtml(e.ExamDate||'-')} • ${escapeHtml(e.MaxScore)} คะแนน</div><button onclick="v2OpenExamScores('${escapeHtml(e.ExamID)}')" class="mt-3 w-full py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">กรอก / แก้ไขคะแนน</button></div>`).join(''):'<div class="col-span-full text-xs text-slate-400">ยังไม่มีคะแนนสอบในห้องนี้</div>';
+      // เซลล์คะแนนกลางภาคและปลายภาค (แก้ไขสดๆ และ paste จาก Excel ได้)
+      const midCell = v2GradeCell(r.midtermScore, weights.midterm, 'exam', 'midterm', r.student?.StudentID, 'exam');
+      const finCell = v2GradeCell(r.finalScore, weights.final, 'exam', 'final', r.student?.StudentID, 'exam');
+
+      const asnWeightScore = Number(r.assignmentWeighted || 0);
+      const grandTotal = Number(r.weightedTotal || 0);
+
+      return '<tr class="bg-white hover:bg-slate-50">' +
+        '<td class="gb-fixed px-2 py-2 text-center font-bold">' + escapeHtml(r.student?.Number || '') + '</td>' +
+        '<td class="gb-fixed px-2 py-2 text-center font-mono">' + escapeHtml(r.student?.StudentID || '') + '</td>' +
+        '<td class="gb-fixed px-2 py-2 text-center">' + escapeHtml(n.prefix) + '</td>' +
+        '<td class="gb-fixed px-2 py-2 font-semibold whitespace-nowrap">' + escapeHtml(n.first) + '</td>' +
+        '<td class="gb-fixed px-2 py-2 font-semibold whitespace-nowrap">' + escapeHtml(n.last) + '</td>' +
+        '<td class="gb-fixed px-2 py-2 text-center font-bold">' + escapeHtml(r.student?.Class || course.ClassName || '') + '</td>' +
+        asn +
+        '<td class="px-3 py-2 text-center font-black bg-sky-50 text-sky-800">' + asnWeightScore.toFixed(1) + '</td>' +
+        midCell + finCell +
+        '<td class="px-3 py-2 text-center font-black bg-emerald-100 text-emerald-900">' + grandTotal.toFixed(1) + '</td>' +
+        '<td class="px-3 py-2 text-center font-black ' + (grandTotal >= 80 ? 'bg-emerald-100 text-emerald-800' : grandTotal >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800') + '">' + escapeHtml(r.gradeLabel ?? '0') + '</td>' +
+      '</tr>';
+    }).join('');
   }
 }
 
 function v2OpenExamScores(examId){const d=v2AdminState.gradebook,e=d?.exams.find(x=>x.ExamID===examId);if(!d||!e)return;document.getElementById('v2ScoreExamTitle').textContent=e.ExamType+' — '+e.Title;document.getElementById('v2ScoreExamMeta').textContent='คะแนนเต็ม '+e.MaxScore;document.getElementById('v2ExamScoreModal').dataset.examId=examId;document.getElementById('v2ExamScoreRows').innerHTML=d.rows.map(r=>`<div class="grid grid-cols-[1fr_110px] items-center gap-3 p-3 rounded-xl border border-slate-100"><div><div class="text-xs font-bold">${escapeHtml(r.student.Name)}</div><div class="text-[10px] text-slate-400">${escapeHtml(r.student.Class)} #${escapeHtml(r.student.Number)}</div></div><input data-student-id="${escapeHtml(r.student.StudentID)}" type="number" min="0" max="${e.MaxScore}" step="0.5" value="${r.examScores[examId]===''?'':r.examScores[examId]}" class="form-input text-xs text-center v2ExamScoreInput"></div>`).join('');v2Open('v2ExamScoreModal');}
 function v2SaveExamScores(){const examId=document.getElementById('v2ExamScoreModal').dataset.examId;const scores=[...document.querySelectorAll('.v2ExamScoreInput')].filter(i=>i.value!=='').map(i=>({studentId:i.dataset.studentId,score:Number(i.value)}));google.script.run.withSuccessHandler(r=>{if(!r?.success)return Swal.fire('ผิดพลาด',r?.message||'','error');v2Close('v2ExamScoreModal');Swal.fire({icon:'success',title:'บันทึกคะแนนแล้ว',text:r.message,timer:1300,showConfirmButton:false});v2LoadGradebook();}).saveExamScores({authToken:getTeacherToken(),examId:examId,scores:scores});}
-function v2ExportGradebook(fmt){const id=document.getElementById('v2GradebookCourse').value;if(!id)return Swal.fire('เลือกรายวิชาก่อน','','warning');showSplashLoading('กำลังสร้างไฟล์ '+fmt.toUpperCase()+'...','กำลังจัดรูปแบบ Gradebook');google.script.run.withSuccessHandler(r=>{hideSplashLoading();if(!r?.success)return Swal.fire('Export ไม่สำเร็จ',r?.message||'','error');Swal.fire({icon:'success',title:'สร้างไฟล์แล้ว',html:`<a href="${safeUrl(r.fileUrl)}" target="_blank" class="text-emerald-700 underline font-bold">เปิด/ดาวน์โหลด ${escapeHtml(r.fileName)}</a>`});}).exportGradebook({authToken:getTeacherToken(),courseId:id,format:fmt});}
-function openTeacherNotifications(){v2Open('v2TeacherNotiModal');}
-function v2RenderAdminNotifications(){const e=document.getElementById('v2TeacherNotiList');if(!e)return;e.innerHTML=v2AdminState.notifications.length?v2AdminState.notifications.map(n=>`<button onclick="v2AdminOpenNoti('${escapeHtml(n.NotificationID)}','${escapeHtml(n.ActionPage||'dashboard')}')" class="w-full text-left p-3 rounded-2xl border ${String(n.IsRead).toLowerCase()==='true'?'bg-white border-slate-100':'bg-amber-50 border-amber-200'}"><div class="text-xs font-bold text-slate-800">${escapeHtml(n.Title)}</div><div class="text-[11px] text-slate-600 mt-1">${escapeHtml(n.Message)}</div><div class="text-[9px] text-slate-400 mt-1">${escapeHtml(n.CreatedAt||'')}</div></button>`).join(''):'<div class="py-10 text-center text-xs text-slate-400">ไม่มีการแจ้งเตือน</div>';}
-function v2AdminOpenNoti(id,page){google.script.run.withSuccessHandler(()=>{const n=v2AdminState.notifications.find(x=>x.NotificationID===id);if(n)n.IsRead='TRUE';v2RenderAdminNotifications();}).markNotificationRead(id,getTeacherToken());v2Close('v2TeacherNotiModal');if(page)switchView(page);}
-function v2AdminMarkAllNoti(){google.script.run.withSuccessHandler(()=>{v2AdminState.notifications.forEach(n=>n.IsRead='TRUE');v2RenderAdminNotifications();document.getElementById('v2AdminNotiBadge')?.classList.add('hidden');document.getElementById('v2MobileAdminNoti')?.classList.add('hidden');}).markAllNotificationsRead(getTeacherToken());}
+function v2ExportGradebook(fmt){
+  const d = v2AdminState.gradebook;
+  if (!d || !d.rows || !d.rows.length) return Swal.fire('ไม่มีข้อมูลที่จะส่งออก', 'กรุณาเลือกห้องเรียนที่มีนักเรียนก่อน', 'warning');
+
+  const course = d.course || {};
+  const assignments = d.assignments || [];
+  const weights = d.weights || { assignment: 60, midterm: 20, final: 20 };
+  const roomName = (course.ClassName || 'All').replace(/[\/\\:*?"<>|]/g, '_');
+  const fileName = 'Gradebook_' + roomName + '_' + new Date().toISOString().slice(0,10) + '.csv';
+
+  const headers = ['เลขที่', 'รหัสนักเรียน', 'คำนำหน้า', 'ชื่อ', 'นามสกุล', 'ห้อง'];
+  assignments.forEach((a, idx) => headers.push('งาน ' + (idx+1) + ': ' + a.Title + ' (' + a.MaxScore + ' คะแนน)'));
+  headers.push('คะแนนงานถ่วงน้ำหนัก (' + weights.assignment + ')');
+  headers.push('สอบกลางภาค (' + weights.midterm + ')');
+  headers.push('สอบปลายภาค (' + weights.final + ')');
+  headers.push('คะแนนรวม (100)', 'เกรด');
+
+  const csvRows = [headers.map(h => '"' + String(h).replace(/"/g, '""') + '"').join(',')];
+  d.rows.forEach(r => {
+    const n = v2SplitStudentName(r.student?.Name || '');
+    const row = [
+      r.student?.Number || '',
+      r.student?.StudentID || '',
+      n.prefix,
+      n.first,
+      n.last,
+      r.student?.Class || course.ClassName || ''
+    ];
+    assignments.forEach(a => {
+      const sc = r.assignmentScores?.[a.AssignmentID];
+      row.push(sc !== '' && sc !== null && sc !== undefined ? sc : '');
+    });
+    row.push(Number(r.assignmentWeighted || 0).toFixed(1));
+    row.push(r.midtermScore !== '' && r.midtermScore !== null && typeof r.midtermScore !== 'undefined' ? Number(r.midtermScore) : '');
+    row.push(r.finalScore !== '' && r.finalScore !== null && typeof r.finalScore !== 'undefined' ? Number(r.finalScore) : '');
+    row.push(Number(r.weightedTotal || 0).toFixed(1));
+    row.push(r.gradeLabel ?? '0');
+    csvRows.push(row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','));
+  });
+
+  const csvContent = '\uFEFF' + csvRows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  Swal.fire({
+    icon: 'success',
+    title: 'ส่งออกข้อมูลสำเร็จ',
+    text: 'ดาวน์โหลด ' + fileName + ' เรียบร้อยแล้ว',
+    timer: 2000,
+    showConfirmButton: false
+  });
+}
 
 const v2OrigSwitchView=switchView;
-switchView=function(viewName){v2OrigSwitchView(viewName);if(viewName==='courses')v2RenderCourses();if(viewName==='gradebook'&&document.getElementById('v2GradebookCourse')?.value)v2LoadGradebook();if(viewName==='calendar')v2RenderAdminCalendar();};
+switchView=function(viewName){
+  v2OrigSwitchView(viewName);
+  if(viewName==='courses') v2RenderCourses();
+  if(viewName==='grading') { renderGradingRoomTabs(); renderGradingQueue(); }
+  if(viewName==='students') { renderStudentRoomTabs(); renderStudentsGrid(); }
+  if(viewName==='gradebook'){
+    v2PopulateGradebookSubjects();
+    v2RenderGradebookRoomTabs();
+    v2BuildAndRenderGradebook();
+  }
+  if(viewName==='calendar') v2RenderAdminCalendar();
+};
 
 const v2OrigOpenGradeModal=openGradeModal;
 openGradeModal=function(submissionId){v2OrigOpenGradeModal(submissionId);const sub=allSubmissions.find(s=>s.SubmissionID===submissionId);if(!sub)return;const link=document.getElementById('gradeFileLinkContainer');if(link){let files=[];try{files=JSON.parse(sub.FilesJson||'[]')||[];}catch(e){}if(!files.length&&sub.FileUrl)files=[{fileName:sub.FileName,fileUrl:sub.FileUrl}];const versions=sub.versions||[];link.innerHTML='<div class="space-y-1 text-left">'+files.map((f,i)=>`<a href="${safeUrl(f.fileUrl)}" target="_blank" class="block text-sky-700 font-bold underline"><i class="fa-solid fa-paperclip mr-1"></i>ไฟล์ ${i+1}: ${escapeHtml(f.fileName||'เปิดไฟล์')}</a>`).join('')+(versions.length?`<button type="button" onclick="v2ShowVersions('${escapeHtml(submissionId)}')" class="mt-1 text-[10px] font-bold text-indigo-700">ดูประวัติ ${versions.length} Version</button>`:'')+'</div>';}}
 function v2ShowVersions(submissionId){const sub=allSubmissions.find(s=>s.SubmissionID===submissionId);const versions=sub?.versions||[];Swal.fire({title:'ประวัติการส่งงาน',width:720,html:'<div class="text-left space-y-3 max-h-[60vh] overflow-y-auto">'+versions.map(v=>{let fs=[];try{fs=JSON.parse(v.FilesJson||'[]')||[]}catch(e){}return `<div class="p-3 rounded-xl border border-slate-200"><div class="font-bold text-sm">Version ${escapeHtml(v.VersionNo)} <span class="text-xs ${v.LateStatus==='ส่งช้า'?'text-rose-600':'text-emerald-600'}">${escapeHtml(v.LateStatus||'')}</span></div><div class="text-[11px] text-slate-500">${escapeHtml(v.SubmittedAt||'')}</div>${v.Comment?`<div class="text-xs mt-1">Comment: ${escapeHtml(v.Comment)}</div>`:''}<div class="mt-2 space-y-1">${fs.map(f=>`<a class="block text-xs text-sky-700 underline" target="_blank" href="${safeUrl(f.fileUrl)}">${escapeHtml(f.fileName)}</a>`).join('')}</div></div>`}).join('')+'</div>',confirmButtonText:'ปิด'});}
 
-function v2EnableAdminPwa(){window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();v2AdminState.deferredInstall=e;});try{let l=document.querySelector('link[rel="manifest"]');if(!l){l=document.createElement('link');l.rel='manifest';l.href='?asset=manifest';document.head.appendChild(l);}}catch(e){}if('serviceWorker'in navigator){try{if (window.CONFIG?.API_URL) navigator.serviceWorker.register(window.CONFIG.API_URL + '?asset=sw').catch(()=>{});}catch(e){}}}
+function v2EnableAdminPwa(){window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();v2AdminState.deferredInstall=e;});try{let l=document.querySelector('link[rel="manifest"]');if(!l){l=document.createElement('link');l.rel='manifest';l.href='<?= url ?>?asset=manifest';document.head.appendChild(l);}}catch(e){}if('serviceWorker'in navigator){try{navigator.serviceWorker.register('<?= url ?>?asset=sw').catch(()=>{});}catch(e){}}}
 
 document.addEventListener('DOMContentLoaded',()=>v2EnsureAdminUi());
 </script>
 
 
-
+<div id="lmsVersionBadge" style="position:fixed;right:10px;bottom:10px;z-index:99999;background:#0f172a;color:#fff;padding:4px 8px;border-radius:999px;font:600 10px Prompt,sans-serif;opacity:.72;pointer-events:none">LMS By T'jessica</div>
 </body>
 </html>

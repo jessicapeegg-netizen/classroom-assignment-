@@ -1260,7 +1260,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
   <!-- ==================================================================== -->
   <!-- MODAL: ส่งงาน / รายละเอียดงาน (Modal) -->
   <!-- ==================================================================== -->
-  <div id="submitModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div id="submitModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
       <div class="p-6 border-b border-slate-100 flex items-start justify-between">
         <div>
@@ -1460,6 +1460,16 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
           if (sClass) sClass.textContent = (cachedStudent.Class || '') + (cachedStudent.Number ? (' เลขที่ ' + cachedStudent.Number) : '');
           const sAvatar = document.getElementById('studentAvatar');
           if (sAvatar && cachedStudent.AvatarUrl) sAvatar.src = cachedStudent.AvatarUrl;
+          const sideName = document.getElementById('sidebarStudentName');
+          if (sideName) sideName.textContent = cachedStudent.Name;
+          const sideClass = document.getElementById('sidebarStudentClass');
+          if (sideClass) sideClass.textContent = (cachedStudent.Class || '') + (cachedStudent.Number ? (' เลขที่ ' + cachedStudent.Number) : '');
+          const sideAvatar = document.getElementById('sidebarAvatar');
+          if (sideAvatar && cachedStudent.AvatarUrl) sideAvatar.src = cachedStudent.AvatarUrl;
+        }
+        const cachedData = JSON.parse(sessionStorage.getItem('student_dashboard_cache') || '{}');
+        if (cachedData && cachedData.student) {
+          onDataLoaded(cachedData);
         }
       } catch(e) {}
 
@@ -1559,6 +1569,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
 
     function showLoadingPopup(title = 'กำลังโหลดข้อมูล...', text = 'กำลังดึงข้อมูลจากระบบ กรุณารอสักครู่') {
       isLoadingPopupActive = true;
+      setTimeout(() => { if (isLoadingPopupActive) closeLoadingPopup(); }, 8000);
       Swal.fire({
         title: title,
         text: text,
@@ -2195,7 +2206,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       
       removeSelectedFile();
       document.getElementById('modalCommentInput').value = '';
-      document.getElementById('submitModal').classList.remove('hidden');
+      const sm = document.getElementById('submitModal'); if (sm) { sm.classList.remove('hidden'); sm.classList.add('flex'); }
     }
 
     function jumpToChatFromModal() {
