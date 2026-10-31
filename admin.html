@@ -4395,111 +4395,34 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
       loadTeacherDashboard(tid);
     }
 
-    function getCurrentWebAppBaseUrl_() {
-      // URL จริงของ Web App จาก ScriptApp.getService().getUrl()
-      const serverUrl = window.CONFIG?.API_URL || "";
-
-      if (
-        serverUrl.startsWith('http') &&
-        !serverUrl.includes('googleusercontent.com')
-      ) {
-        return serverUrl;
-      }
-
-      try {
-        const href = String(window.top?.location?.href || window.location.href || '');
-        const base = href.split('?')[0].split('#')[0];
-
-        if (
-          base.startsWith('http') &&
-          !base.includes('googleusercontent.com') &&
-          (
-            base.includes('script.google.com') ||
-            base.includes('script.googleusercontent.com/macros/')
-          )
-        ) {
-          return base;
-        }
-      } catch(e) {}
-
-      return '';
-    }
-
-    function redirectTeacherToLoginAfterLogout_() {
-      const query = 'page=login&logout=1';
-
-      const doRedirect = (base) => {
-        base = String(base || '').trim();
-
-        if (
-          !base.startsWith('http') ||
-          base.includes('googleusercontent.com')
-        ) {
-          return false;
-        }
-
-        const target =
-          base.split('?')[0].split('#')[0] +
-          '?' + query;
-
-        try {
-          const a = document.createElement('a');
-          a.href = target;
-          a.target = '_top';
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-          return true;
-        } catch(e) {}
-
-        try {
-          window.top.location.href = target;
-          return true;
-        } catch(e) {}
-
-        return false;
-      };
-
-      const base = getCurrentWebAppBaseUrl_();
-      if (doRedirect(base)) return;
-
-      try {
-        google.script.run
-          .withSuccessHandler(url => {
-            if (!doRedirect(url)) {
-              document.body.innerHTML =
-                '<div style="font-family:sans-serif;padding:40px;text-align:center">' +
-                '<h3>ออกจากระบบแล้ว</h3>' +
-                '<p>กรุณาปิดแท็บนี้แล้วเปิดลิงก์ระบบใหม่</p>' +
-                '</div>';
-            }
-          })
-          .withFailureHandler(() => {
-            document.body.innerHTML =
-              '<div style="font-family:sans-serif;padding:40px;text-align:center">' +
-              '<h3>ออกจากระบบแล้ว</h3>' +
-              '<p>กรุณาปิดแท็บนี้แล้วเปิดลิงก์ระบบใหม่</p>' +
-              '</div>';
-          })
-          .getWebAppUrl();
-      } catch(e) {}
+        function redirectTeacherToLoginAfterLogout_() {
+      clearTeacherAuth();
+      if (window.LMS && typeof LMS.clearTeacherAuth === 'function') LMS.clearTeacherAuth();
+      navigateToPage('login', { logout: '1', switch: '1' });
     }
 
     function logoutTeacher() {
       Swal.fire({
-        title:'ออกจากระบบ?',
-        icon:'question',
-        showCancelButton:true,
-        confirmButtonText:'ออกจากระบบ',
-        cancelButtonText:'ยกเลิก',
-        confirmButtonColor:'#ef4444'
+        title: 'ออกจากระบบ?',
+        text: 'คุณต้องการออกจากระบบจัดการสำหรับครูใช่หรือไม่',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        reverseButtons: true,
+        customClass: {
+          popup: 'rounded-3xl shadow-2xl',
+          confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+          cancelButton: 'rounded-xl text-xs font-semibold px-4 py-2.5'
+        }
       }).then(r => {
         if (!r.isConfirmed) return;
 
         const token = getTeacherToken();
-
-        // ล้าง Token ในเครื่องก่อนทันที
         clearTeacherAuth();
+        if (window.LMS && typeof LMS.clearTeacherAuth === 'function') LMS.clearTeacherAuth();
 
         let redirected = false;
         const goLogin = () => {
@@ -4508,26 +4431,24 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
           redirectTeacherToLoginAfterLogout_();
         };
 
-        // ป้องกัน callback จาก Apps Script ค้าง
-        const fallbackTimer = setTimeout(goLogin, 700);
+        const fallbackTimer = setTimeout(goLogin, 600);
 
-        if (
-          typeof google !== 'undefined' &&
-          google.script &&
-          google.script.run &&
-          token
-        ) {
+        if (token) {
           try {
-            google.script.run
-              .withSuccessHandler(() => {
+            if (typeof google !== 'undefined' && google.script && google.script.run && !google.script.run.__isShim) {
+              google.script.run
+                .withSuccessHandler(() => { clearTimeout(fallbackTimer); goLogin(); })
+                .withFailureHandler(() => { clearTimeout(fallbackTimer); goLogin(); })
+                .logoutSession(token);
+            } else if (window.LMS) {
+              LMS.call('logoutSession', { authToken: token }).finally(() => {
                 clearTimeout(fallbackTimer);
                 goLogin();
-              })
-              .withFailureHandler(() => {
-                clearTimeout(fallbackTimer);
-                goLogin();
-              })
-              .logoutSession(token);
+              });
+            } else {
+              clearTimeout(fallbackTimer);
+              goLogin();
+            }
           } catch(e) {
             clearTimeout(fallbackTimer);
             goLogin();
@@ -4544,24 +4465,19 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         return window.LMS.navigateTo(pageName, params);
       }
 
-      let baseUrl = window.CONFIG?.API_URL || "";
-      if (!baseUrl || baseUrl.trim() === '' || !baseUrl.startsWith('http')) {
-        baseUrl = window.location.href.split('?')[0].split('#')[0];
-      }
-      const sep = baseUrl.includes('?') ? '&' : '?';
-      let targetUrl = baseUrl + sep + 'page=' + encodeURIComponent(pageName);
+      let filename = 'login.html';
+      if (pageName === 'admin' || pageName === 'teacher') filename = 'admin.html';
+      else if (pageName === 'student' || pageName === 'index') filename = 'student.html';
+      else if (pageName === 'login' || pageName === 'home') filename = 'login.html';
+
+      const currentPath = window.location.pathname;
+      const dir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+      let targetUrl = window.location.origin + dir + filename;
       if (params && typeof params === 'object') {
-        Object.keys(params).forEach(k => {
-          if (params[k]) targetUrl += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-        });
+        const qs = new URLSearchParams(params).toString();
+        if (qs) targetUrl += (targetUrl.includes('?') ? '&' : '?') + qs;
       }
       showSplashLoading('กำลังเปลี่ยนหน้า...', 'กรุณารอสักครู่');
-      try {
-        if (window.top && window.top.location) {
-          window.top.location.href = targetUrl;
-          return;
-        }
-      } catch(e) {}
       window.location.href = targetUrl;
     }
 

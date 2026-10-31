@@ -1480,38 +1480,7 @@ window.navigateToPage = (page, params) => LMS.navigateTo(page, params);
         .validateSession(token, 'student');
     }
 
-    function getCurrentWebAppBaseUrl_() {
-      // URL นี้มาจาก ScriptApp.getService().getUrl() ผ่าน Code.gs
-      const serverUrl = window.CONFIG?.API_URL || "";
-
-      if (
-        serverUrl.startsWith('http') &&
-        !serverUrl.includes('googleusercontent.com')
-      ) {
-        return serverUrl;
-      }
-
-      // fallback เฉพาะกรณี URL ปัจจุบันเป็น Web App จริงเท่านั้น
-      try {
-        const href = String(window.top?.location?.href || window.location.href || '');
-        const base = href.split('?')[0].split('#')[0];
-
-        if (
-          base.startsWith('http') &&
-          !base.includes('googleusercontent.com') &&
-          (
-            base.includes('script.google.com') ||
-            base.includes('script.googleusercontent.com/macros/')
-          )
-        ) {
-          return base;
-        }
-      } catch(e) {}
-
-      return '';
-    }
-
-        function redirectToLoginAfterLogout_(extraParams) {
+    function redirectToLoginAfterLogout_(extraParams) {
       clearStudentAuth();
       if (window.LMS && typeof LMS.clearStudentAuth === 'function') LMS.clearStudentAuth();
       const params = Object.assign({ logout: '1', switch: '1' }, extraParams || {});
