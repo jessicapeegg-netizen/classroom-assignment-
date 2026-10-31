@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+
+<html lang="th">
+
+<head>
+
+  <!-- Classroom LMS Configuration & Unified API Client -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+
+
+  <base target="_top">
+
+  <script>window.onerror = function(m,s,l) { console.error("JS Error:", m, "line:", l); return false; };</script>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>เข้าสู่ระบบ / ลงทะเบียนนักเรียน | Student Portal</title>
+
+  <!-- Fonts -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Tailwind CSS -->
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+
+    tailwind.config = {
+
+      theme: {
+
+        extend: {
+
+          fontFamily: {
+
+            sans: ['Prompt', 'sans-serif'],
+
+          },
+
+          colors: {
+
+            brand: {
+
+              50: '#f0f9ff',
+
+              100: '#e0f2fe',
+
+              200: '#bae6fd',
+
+              500: '#0ea5e9',
+
+              600: '#0284c7',
+
+              700: '#0369a1',
+
+              800: '#075985',
+
+              900: '#0c4a6e',
+
+            }
+
+          },
+
+          animation: {
+
+            'float-slow': 'float 6s ease-in-out infinite',
+
+            'float-reverse': 'floatRev 7s ease-in-out infinite',
+
+            'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+
+          },
+
+          keyframes: {
+
+            float: {
+
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+
+              '50%': { transform: 'translateY(-15px) rotate(3deg)' },
+
+            },
+
+            floatRev: {
+
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+
+              '50%': { transform: 'translateY(15px) rotate(-3deg)' },
+
+            },
+
+            pulseGlow: {
+
+              '0%, 100%': { opacity: '0.6', transform: 'scale(1)' },
+
+              '50%': { opacity: '1', transform: 'scale(1.05)' },
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+  </script>
+
+  <!-- SweetAlert2 -->
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Canvas Confetti -->
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+
+    body {
+
+      font-family: 'Prompt', sans-serif;
+
+      background: radial-gradient(circle at 10% 20%, #e0f2fe 0%, #f0fdf4 35%, #f8fafc 80%, #f0f9ff 100%);
+
+      min-height: 100vh;
+
+      overflow-x: hidden;
+
+    }
+
+    .glass-card {
+
+      background: rgba(255, 255, 255, 0.88);
+
+      backdrop-filter: blur(24px);
+
+      -webkit-backdrop-filter: blur(24px);
+
+      border: 1px solid rgba(255, 255, 255, 0.95);
+
+      box-shadow: 0 25px 50px -12px rgba(2, 132, 199, 0.18), 0 10px 25px -10px rgba(16, 185, 129, 0.1);
+
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+
+    }
+
+
+
+    .interactive-input {
+
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    }
+
+    .interactive-input:focus-within {
+
+      transform: translateY(-2px);
+
+      box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.18);
+
+    }
+
+    .interactive-btn {
+
+      position: relative;
+
+      overflow: hidden;
+
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    }
+
+    .interactive-btn:hover {
+
+      transform: translateY(-2px);
+
+      box-shadow: 0 12px 24px -6px rgba(2, 132, 199, 0.35);
+
+    }
+
+    .interactive-btn:active {
+
+      transform: translateY(0);
+
+      box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.2);
+
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+
+      width: 5px;
+
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+
+      background: #f1f5f9;
+
+      border-radius: 4px;
+
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+
+      background: #cbd5e1;
+
+      border-radius: 4px;
+
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+
+      background: #94a3b8;
+
+    }
+
+
+
+    /* Floating Bubble Animations */
+
+    @keyframes floatBubble {
+
+      0%, 100% { transform: translateY(0) scale(1); }
+
+      50% { transform: translateY(-20px) scale(1.05); }
+
+    }
+
+    .bubble-1 { animation: floatBubble 7s ease-in-out infinite; }
+
+    .bubble-2 { animation: floatBubble 9s ease-in-out 1s infinite; }
+
+    .bubble-3 { animation: floatBubble 11s ease-in-out 2s infinite; }
+
+
+
+    /* Shake animation on invalid input */
+
+    @keyframes shake {
+
+      0%, 100% { transform: translateX(0); }
+
+      20%, 60% { transform: translateX(-8px); }
+
+      40%, 80% { transform: translateX(8px); }
+
+    }
+
+    .shake-anim {
+
+      animation: shake 0.5s ease-in-out;
+
+    }
+
+
+
+    /* ==================================================================== */
+
+    /* CUTE & STUNNING SWEETALERT2 THEME (UI ป๊อปอัปน่ารัก โดดเด่น สไตล์โมเดิร์น) */
+
+    /* ==================================================================== */
+
+    .swal2-popup {
+
+      border-radius: 32px !important;
+
+      padding: 2.2rem 1.8rem !important;
+
+      background: rgba(255, 255, 255, 0.98) !important;
+
+      backdrop-filter: blur(24px) !important;
+
+      -webkit-backdrop-filter: blur(24px) !important;
+
+      border: 2px solid rgba(240, 249, 255, 0.9) !important;
+
+      box-shadow: 0 30px 60px -15px rgba(2, 132, 199, 0.22), 0 10px 25px -10px rgba(16, 185, 129, 0.12) !important;
+
+    }
+
+
+
+    .swal2-popup.swal2-show {
+
+      animation: cuteSpringPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+
+    }
+
+
+
+    .swal2-popup.swal2-hide {
+
+      animation: cuteHidePop 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+
+    }
+
+
+
+    @keyframes cuteSpringPop {
+
+      0% { transform: scale(0.8) translateY(15px); opacity: 0; }
+
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+
+    }
+
+
+
+    @keyframes cuteHidePop {
+
+      0% { transform: scale(1) translateY(0); opacity: 1; }
+
+      100% { transform: scale(0.8) translateY(15px); opacity: 0; }
+
+    }
+
+
+
+    .swal2-title {
+
+      font-family: 'Prompt', sans-serif !important;
+
+      font-weight: 800 !important;
+
+      font-size: 1.35rem !important;
+
+      color: #0c4a6e !important;
+
+      letter-spacing: -0.02em !important;
+
+      margin-top: 0.25rem !important;
+
+      margin-bottom: 0.5rem !important;
+
+    }
+
+
+
+    .swal2-html-container {
+
+      font-family: 'Prompt', sans-serif !important;
+
+      font-size: 0.925rem !important;
+
+      color: #475569 !important;
+
+      line-height: 1.65 !important;
+
+    }
+
+
+
+    .swal2-confirm {
+
+      border-radius: 20px !important;
+
+      padding: 0.75rem 2.2rem !important;
+
+      font-weight: 700 !important;
+
+      font-size: 0.9rem !important;
+
+      font-family: 'Prompt', sans-serif !important;
+
+      box-shadow: 0 10px 22px -5px rgba(2, 132, 199, 0.45) !important;
+
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+
+      border: none !important;
+
+    }
+
+    .swal2-confirm:hover {
+
+      transform: translateY(-2px) scale(1.04) !important;
+
+      box-shadow: 0 14px 28px -5px rgba(2, 132, 199, 0.55) !important;
+
+    }
+
+    .swal2-confirm:active {
+
+      transform: translateY(0) scale(0.98) !important;
+
+    }
+
+
+
+    .swal2-cancel {
+
+      border-radius: 20px !important;
+
+      padding: 0.75rem 1.8rem !important;
+
+      font-weight: 600 !important;
+
+      font-size: 0.9rem !important;
+
+      font-family: 'Prompt', sans-serif !important;
+
+      background: #f1f5f9 !important;
+
+      color: #64748b !important;
+
+      transition: all 0.25s ease !important;
+
+      border: none !important;
+
+    }
+
+    .swal2-cancel:hover {
+
+      background: #e2e8f0 !important;
+
+      color: #1e293b !important;
+
+      transform: translateY(-2px) !important;
+
+    }
+
+
+
+    .swal2-input {
+
+      border-radius: 20px !important;
+
+      border: 1.5px solid #e2e8f0 !important;
+
+      padding: 0.8rem 1.25rem !important;
+
+      font-family: 'Prompt', sans-serif !important;
+
+      font-size: 0.95rem !important;
+
+      background: #f8fafc !important;
+
+      box-shadow: none !important;
+
+      transition: all 0.2s ease !important;
+
+    }
+
+    .swal2-input:focus {
+
+      border-color: #0284c7 !important;
+
+      background: #ffffff !important;
+
+      box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15) !important;
+
+    }
+
+
+
+    .swal2-icon {
+
+      border-width: 3.5px !important;
+
+      transform: scale(0.95) !important;
+
+      margin-top: 0.5rem !important;
+
+      margin-bottom: 0.85rem !important;
+
+    }
+
+
+
+    .swal2-loader {
+
+      border-color: #0284c7 transparent #0284c7 transparent !important;
+
+      width: 2.8em !important;
+
+      height: 2.8em !important;
+
+      margin: 1.2rem auto 0.2rem !important;
+
+      border-width: 0.25em !important;
+
+    }
+
+  </style>
+
+  <!-- <link rel="manifest" href="manifest.json"> -->
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-4 relative selection:bg-sky-500 selection:text-white">
+
+
+
+  <!-- Floating Ambient Decorative Orbs with Micro-Movement -->
+
+  <div class="fixed top-8 left-10 w-80 h-80 bg-sky-300/30 rounded-full blur-3xl pointer-events-none bubble-1"></div>
+
+  <div class="fixed bottom-8 right-12 w-96 h-96 bg-emerald-300/25 rounded-full blur-3xl pointer-events-none bubble-2"></div>
+
+  <div class="fixed top-1/2 left-1/3 w-64 h-64 bg-blue-300/20 rounded-full blur-2xl pointer-events-none bubble-3"></div>
+
+
+
+  <!-- Main Auth Card Container -->
+
+  <div id="authCard" class="w-full max-w-lg glass-card rounded-3xl p-6 sm:p-8 relative z-10 transition-all duration-300 transform hover:shadow-2xl">
+    <div id="joinCourseBanner" class="hidden mb-4 p-3 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-semibold">
+      <i class="fa-solid fa-qrcode mr-1"></i> คุณเปิดระบบจาก QR ห้องเรียน เมื่อเข้าสู่ระบบแล้วระบบจะเข้าร่วมห้องเรียนให้อัตโนมัติ
+    </div>
+
+    <!-- Discreet Secret Admin Access (Hidden/Subtle icon at top-right) -->
+
+    <button type="button" onclick="promptTeacherLogin()" title="ระบบผู้ดูแล" class="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-30 hover:opacity-100 group">
+
+      <i class="fa-solid fa-shield-halved text-xs group-hover:scale-110 transition-transform"></i>
+
+    </button>
+
+
+
+    <!-- Top Brand Header -->
+
+    <div class="text-center mb-6">
+
+      <div onclick="handleLogoClick()" title="คลิกเพื่อรีเฟรช" id="loginBrandLogoBox" class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-500 to-cyan-400 flex items-center justify-center text-white text-2xl shadow-lg shadow-sky-500/30 mb-3 mx-auto transform hover:scale-110 hover:rotate-6 transition duration-200 cursor-pointer overflow-hidden relative border border-white/40">
+
+        <img id="loginBrandLogoImg" src="" alt="School Logo" class="w-full h-full object-cover hidden rounded-2xl" onerror="this.classList.add('hidden'); document.getElementById('loginBrandLogoIcon').classList.remove('hidden');">
+
+        <i id="loginBrandLogoIcon" class="fa-solid fa-graduation-cap"></i>
+
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-sky-800 via-blue-900 to-sky-700 bg-clip-text text-transparent">
+
+        ระบบส่งงานนักเรียน
+
+      </h1>
+
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">
+
+        เข้าสู่ระบบส่วนตัวเพื่อติดตามการบ้าน ส่งงาน และดู Feedback
+
+      </p>
+
+    </div>
+
+
+
+    <!-- Mode Switcher Tabs (Login vs Register) -->
+
+    <div class="flex items-center bg-slate-100/80 p-1 rounded-2xl mb-6 border border-slate-200/60">
+
+      <button type="button" onclick="setAuthTab('login')" id="tabLoginBtn" class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-sky-800 bg-white shadow-sm transition-all duration-200 flex items-center justify-center gap-2">
+
+        <i class="fa-solid fa-right-to-bracket text-sky-600"></i>
+
+        <span>เข้าสู่ระบบ</span>
+
+      </button>
+
+      <button type="button" onclick="setAuthTab('register')" id="tabRegisterBtn" class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all duration-200 flex items-center justify-center gap-2">
+
+        <i class="fa-solid fa-user-plus text-slate-400"></i>
+
+        <span>ลงทะเบียนนักเรียนใหม่</span>
+
+      </button>
+
+    </div>
+
+
+
+    <!-- ======================================================== -->
+
+    <!-- FORM 1: เข้าสู่ระบบ (Login Form) -->
+
+    <!-- ======================================================== -->
+
+    <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+
+      <div class="interactive-input transition-all duration-200">
+
+        <label class="text-xs font-bold text-slate-700 block mb-1">
+
+          <i class="fa-solid fa-id-card-clip text-sky-600 mr-1"></i> รหัสนักเรียน หรือ อีเมล:
+
+        </label>
+
+        <div class="relative">
+
+          <input type="text" id="loginUsername" required placeholder="รหัสนักเรียน หรือ อีเมล" class="w-full text-xs sm:text-sm pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-white/90 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium transition shadow-sm font-mono">
+
+          <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="interactive-input transition-all duration-200">
+
+        <div class="flex items-center justify-between mb-1">
+
+          <label class="text-xs font-bold text-slate-700">
+
+            <i class="fa-solid fa-lock text-sky-600 mr-1"></i> รหัสผ่านส่วนตัว:
+
+          </label>
+
+          <span class="text-[11px] text-slate-400">อย่างน้อย 8 ตัวอักษร</span>
+
+        </div>
+
+        <div class="relative">
+
+          <input type="password" id="loginPassword" required minlength="8" placeholder="รหัสผ่านส่วนตัว" class="w-full text-xs sm:text-sm pl-10 pr-10 py-3 rounded-2xl border border-slate-200 bg-white/90 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium transition shadow-sm">
+
+          <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+
+          <button type="button" onclick="togglePassVisibility('loginPassword', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
+
+            <i class="fa-solid fa-eye text-sm"></i>
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="flex items-center justify-between text-xs pt-1">
+
+        <label class="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-800 transition select-none">
+
+          <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300">
+
+          <span>จดจำการเข้าสู่ระบบ</span>
+
+        </label>
+
+        <button type="button" onclick="studentForgotPasswordInfo()" class="font-bold text-sky-700 hover:text-sky-900 hover:underline">
+          ลืมรหัสผ่าน?
+        </button>
+
+      </div>
+
+
+
+      <button type="submit" id="loginSubmitBtn" class="interactive-btn w-full py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-sky-600 via-blue-600 to-sky-700 hover:from-sky-700 hover:to-blue-800 shadow-lg shadow-sky-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-2">
+
+        <i class="fa-solid fa-right-to-bracket text-base"></i>
+
+        <span>เข้าสู่ระบบนักเรียน</span>
+
+      </button>
+
+    </form>
+
+
+
+    <!-- ======================================================== -->
+
+    <!-- FORM 2: ลงทะเบียนนักเรียนใหม่ (Register Form) -->
+
+    <!-- ======================================================== -->
+
+    <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="space-y-4 hidden max-h-[65vh] overflow-y-auto custom-scrollbar pr-1">
+
+      <!-- Avatar Upload Circle (No demo photo) -->
+
+      <div class="text-center">
+
+        <div class="relative inline-block group cursor-pointer" onclick="document.getElementById('regPhotoInput').click()">
+
+          <img id="regPhotoPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' fill='%2394a3b8'><circle cx='64' cy='64' r='64' fill='%23f1f5f9'/><path d='M64 64a24 24 0 100-48 24 24 0 000 48zm0 12c-26.7 0-48 16.3-48 36.5 0 2.5 2 4.5 4.5 4.5h87c2.5 0 4.5-2 4.5-4.5 0-20.2-21.3-36.5-48-36.5z'/></svg>" class="w-20 h-20 rounded-full object-cover ring-4 ring-sky-200 shadow-md group-hover:opacity-90 transition bg-slate-100 p-0.5">
+
+          <span class="absolute bottom-0 right-0 w-6 h-6 bg-sky-600 text-white text-xs flex items-center justify-center rounded-full border-2 border-white shadow">
+
+            <i class="fa-solid fa-camera"></i>
+
+          </span>
+
+          <input type="file" id="regPhotoInput" class="hidden" accept="image/*" onchange="previewRegAvatar(event)">
+
+        </div>
+
+        <p class="text-[11px] text-slate-400 mt-1">คลิกเพื่ออัปโหลดรูปภาพประจำตัว (ไม่บังคับ)</p>
+
+      </div>
+
+
+
+      <div class="interactive-input">
+
+        <label class="text-xs font-bold text-slate-700 block mb-1">
+
+          <i class="fa-solid fa-signature text-sky-600 mr-1"></i> ชื่อ - นามสกุล นักเรียน:
+
+        </label>
+
+        <input type="text" id="regName" required placeholder="ชื่อ - นามสกุล" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+
+      </div>
+
+
+
+      <div class="grid grid-cols-2 gap-3">
+
+        <div class="interactive-input">
+
+          <label class="text-xs font-bold text-slate-700 block mb-1">
+
+            <i class="fa-solid fa-school text-sky-600 mr-1"></i> ชั้นเรียน / ห้อง:
+
+          </label>
+
+          <input type="text" id="regClass" required placeholder="เช่น ม.1/1 หรือ ม.4/2" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-semibold">
+
+        </div>
+
+        <div class="interactive-input">
+
+          <label class="text-xs font-bold text-slate-700 block mb-1">
+
+            <i class="fa-solid fa-arrow-down-1-9 text-sky-600 mr-1"></i> เลขที่:
+
+          </label>
+
+          <input type="number" id="regNumber" required min="1" max="99" placeholder="เลขที่" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-semibold">
+
+        </div>
+
+      </div>
+
+
+
+      <div class="interactive-input">
+
+        <label class="text-xs font-bold text-slate-700 block mb-1">
+
+          <i class="fa-solid fa-id-badge text-sky-600 mr-1"></i> รหัสนักเรียน (ถ้ามี):
+
+        </label>
+
+        <input type="text" id="regStudentId" placeholder="รหัสนักเรียน (ถ้ามี)" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+
+      </div>
+
+
+
+      <div class="interactive-input">
+
+        <label class="text-xs font-bold text-slate-700 block mb-1">
+
+          <i class="fa-solid fa-envelope text-sky-600 mr-1"></i> อีเมลติดต่อ (ถ้ามี):
+
+        </label>
+
+        <input type="email" id="regEmail" placeholder="อีเมล (ถ้ามี)" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+
+      </div>
+
+
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        <div class="interactive-input">
+
+          <div class="flex items-center justify-between mb-1">
+
+            <label class="text-xs font-bold text-slate-700">
+
+              <i class="fa-solid fa-key text-sky-600 mr-1"></i> ตั้งรหัสผ่าน:
+
+            </label>
+
+            <span id="passStrengthText" class="text-[10px] font-bold text-slate-400">8 ตัวขึ้นไป</span>
+
+          </div>
+
+          <input type="password" id="regPass" required minlength="8" oninput="checkPassStrength(this.value)" placeholder="รหัสผ่าน (อย่างน้อย 8 ตัว)" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium transition">
+
+          <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1.5 overflow-hidden">
+
+            <div id="passStrengthBar" class="h-full rounded-full transition-all duration-300 bg-slate-300" style="width: 0%"></div>
+
+          </div>
+
+        </div>
+
+        <div class="interactive-input">
+
+          <div class="flex items-center justify-between mb-1">
+
+            <label class="text-xs font-bold text-slate-700">
+
+              <i class="fa-solid fa-check-double text-sky-600 mr-1"></i> ยืนยันรหัสผ่าน:
+
+            </label>
+
+            <span id="passMatchText" class="text-[10px] font-bold text-slate-400"></span>
+
+          </div>
+
+          <input type="password" id="regPassConfirm" required minlength="8" oninput="checkPassMatch()" placeholder="ยืนยันรหัสผ่านอีกครั้ง" class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium transition">
+
+        </div>
+
+      </div>
+
+
+
+      <button type="submit" class="w-full py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-2">
+
+        <i class="fa-solid fa-user-check text-base"></i>
+
+        <span>ลงทะเบียนและเข้าสู่ระบบทันที</span>
+
+      </button>
+
+    </form>
+
+
+
+    <!-- Bottom Help Text -->
+
+    <div class="mt-6 pt-4 border-t border-slate-200/70 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-center gap-1.5 font-medium">
+
+      <span>ระบบจัดการเรียนรู้และส่งงานออนไลน์</span>
+
+      <span class="hidden sm:inline">•</span>
+
+      <span onclick="openTeacherModal()" title="เข้าสู่ระบบ / ลงทะเบียนครูผู้สอน" class="text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-900 px-2.5 py-1 rounded-xl border border-emerald-200 transition cursor-pointer flex items-center gap-1.5 inline-flex shadow-sm">
+
+        <i class="fa-solid fa-chalkboard-user text-xs text-emerald-600"></i> เข้าสู่ระบบ / สมัครครูผู้สอน
+
+      </span>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ==================================================================== -->
+
+  <!-- MODAL: เข้าสู่ระบบ / ลงทะเบียนครูผู้สอน (Teacher Login & Register Modal) -->
+
+  <!-- ==================================================================== -->
+
+  <div id="teacherAuthModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 animate-cuteSpringPop">
+
+      <!-- Header with Tabs -->
+
+      <div class="p-6 pb-3 border-b border-slate-100">
+
+        <div class="flex items-center justify-between mb-4">
+
+          <div class="flex items-center gap-2.5">
+
+            <div class="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base font-bold shadow-sm">
+
+              <i class="fa-solid fa-chalkboard-user"></i>
+
+            </div>
+
+            <div>
+
+              <h3 class="text-base font-bold text-slate-900 leading-tight">พื้นที่สำหรับครูผู้สอน</h3>
+
+              <p class="text-[11px] text-slate-400">เข้าสู่ระบบหรือลงทะเบียนครูผู้สอนใหม่</p>
+
+            </div>
+
+          </div>
+
+          <button onclick="closeTeacherModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition">
+
+            <i class="fa-solid fa-xmark"></i>
+
+          </button>
+
+        </div>
+
+
+
+        <!-- Teacher Tabs -->
+
+        <div class="flex p-1 bg-slate-100 rounded-2xl gap-1">
+
+          <button type="button" id="tabTeacherLoginBtn" onclick="setTeacherAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-white shadow-sm transition flex items-center justify-center gap-1.5">
+
+            <i class="fa-solid fa-key"></i> เข้าสู่ระบบครู
+
+          </button>
+
+          <button type="button" id="tabTeacherRegBtn" onclick="handleTeacherRegisterTabClick()" class="flex-1 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center justify-center gap-1.5">
+
+            <i class="fa-solid fa-shield-halved text-amber-500" id="regTabLockIcon"></i>
+
+            <span>ลงทะเบียนครูใหม่</span>
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- Tab 1: Teacher Login Form -->
+
+      <form id="teacherLoginForm" onsubmit="handleTeacherLoginSubmit(event)" class="p-6 space-y-4">
+
+        <div>
+
+          <label class="text-xs font-bold text-slate-700 block mb-1">รหัสผ่านความปลอดภัยครู:</label>
+
+          <div class="relative">
+
+            <input type="password" id="modalTeacherPassword" required placeholder="กรอกรหัสผ่านความปลอดภัยครู" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono pr-10">
+
+            <button type="button" onclick="togglePassVisibility('modalTeacherPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600">
+
+              <i class="fa-solid fa-eye text-xs"></i>
+
+            </button>
+
+          </div>
+
+          <div class="mt-2 flex items-center justify-between gap-2">
+            <p class="text-[11px] text-slate-400 flex items-center gap-1">
+              <i class="fa-solid fa-shield-halved text-emerald-600 text-[10px]"></i>
+              <span>เข้าสู่ระบบเฉพาะครูผู้สอนและผู้ดูแลระบบ</span>
+            </p>
+            <button type="button" onclick="openTeacherForgotPassword()" class="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 hover:underline whitespace-nowrap">
+              ลืมรหัสผ่าน?
+            </button>
+          </div>
+
+        </div>
+
+
+
+        <button type="submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/30 transition flex items-center justify-center gap-2">
+
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> เข้าสู่หน้าระบบจัดการครู
+
+        </button>
+
+      </form>
+
+
+
+      <!-- Tab 2: Teacher Register Form (Protected by Admin Passcode) -->
+
+      <form id="teacherRegisterForm" onsubmit="handleTeacherRegisterSubmit(event)" class="p-6 space-y-3.5 hidden">
+
+        <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-[11px] text-emerald-800 font-medium">
+
+          <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+
+          <span>ยืนยันสิทธิ์เรียบร้อย กรุณากรอกข้อมูลและตั้งรหัสผ่านใหม่</span>
+
+        </div>
+
+
+
+        <!-- Photo Upload -->
+
+        <div class="flex flex-col items-center justify-center text-center pb-1">
+
+          <div class="relative group cursor-pointer">
+
+            <img id="teacherRegPhotoPreview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' fill='%23059669'><circle cx='64' cy='64' r='64' fill='%23ecfdf5'/><path d='M64 64a24 24 0 100-48 24 24 0 000 48zm0 12c-26.7 0-48 16.3-48 36.5 0 2.5 2 4.5 4.5 4.5h87c2.5 0 4.5-2 4.5-4.5 0-20.2-21.3-36.5-48-36.5z'/></svg>" class="w-20 h-20 rounded-full object-cover ring-4 ring-emerald-200 shadow-md bg-emerald-50">
+
+            <label class="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-semibold cursor-pointer transition">
+
+              <i class="fa-solid fa-camera text-sm mb-0.5"></i>
+
+              <span>เลือกรูป</span>
+
+              <input type="file" id="teacherRegPhotoInput" accept="image/*" class="hidden" onchange="previewTeacherRegAvatar(event)">
+
+            </label>
+
+          </div>
+
+          <p class="text-[10px] text-slate-400 mt-1">อัปโหลดรูปโปรไฟล์ครู (คลิกเพื่อเลือกไฟล์)</p>
+
+        </div>
+
+
+
+        <div>
+
+          <label class="text-xs font-bold text-slate-700 block mb-1">ชื่อ-นามสกุลครูผู้สอน:</label>
+
+          <input type="text" id="teacherRegName" required placeholder="เช่น ครูสมชาย สิทธิศักดิ์" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+
+        </div>
+
+
+
+        <div class="grid grid-cols-2 gap-2.5">
+
+          <div>
+
+            <label class="text-xs font-bold text-slate-700 block mb-1">กลุ่มสาระ / วิชา:</label>
+
+            <input type="text" id="teacherRegSubject" required placeholder="เช่น วิทยาการคำนวณ" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+
+          </div>
+
+          <div>
+
+            <label class="text-xs font-bold text-slate-700 block mb-1">ระดับชั้นที่สอน:</label>
+
+            <input type="text" id="teacherRegClass" placeholder="เช่น ม.5/2 หรือ ทุกระดับชั้น" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+
+          </div>
+
+        </div>
+
+
+
+        <div>
+
+          <label class="text-xs font-bold text-slate-700 block mb-1">อีเมลติดต่อครู:</label>
+
+          <input type="email" id="teacherRegEmail" placeholder="teacher@school.ac.th" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+
+        </div>
+
+
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
+          <div>
+
+            <label class="text-xs font-bold text-slate-700 block mb-1">ตั้งรหัสผ่านครูใหม่:</label>
+
+            <div class="relative">
+
+              <input type="password" id="teacherRegPass" required minlength="6" placeholder="ตั้งรหัสผ่านใหม่" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono pr-8">
+
+              <button type="button" onclick="togglePassVisibility('teacherRegPass', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600">
+
+                <i class="fa-solid fa-eye text-[11px]"></i>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div>
+
+            <label class="text-xs font-bold text-slate-700 block mb-1">ยืนยันรหัสผ่านใหม่:</label>
+
+            <div class="relative">
+
+              <input type="password" id="teacherRegPassConfirm" required minlength="6" placeholder="ยืนยันรหัสผ่าน" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono pr-8">
+
+              <button type="button" onclick="togglePassVisibility('teacherRegPassConfirm', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600">
+
+                <i class="fa-solid fa-eye text-[11px]"></i>
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <p class="text-[10px] text-slate-400">คุณสามารถใช้รหัสผ่านใหม่นี้สำหรับเข้าสู่ระบบครูในครั้งต่อไปได้ทันที</p>
+
+
+
+        <button type="submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/30 transition flex items-center justify-center gap-2 mt-2">
+
+          <i class="fa-solid fa-user-check"></i> บันทึกข้อมูลและเข้าสู่ระบบทันที
+
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+  <footer class="mt-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5 font-medium relative z-10">
+    <span>พัฒนาระบบ โดย</span>
+    <span class="text-sky-600 font-bold bg-white/80 backdrop-blur-sm px-2.5 py-0.5 rounded-lg border border-sky-200/80 shadow-sm">Jessica_P.</span>
+  </footer>
+
+  <script>
+    const SCRIPT_URL = window.CONFIG?.API_URL || "";
+
+    const PAGE_TITLE = "เข้าสู่ระบบ / ลงทะเบียนนักเรียน | Student Portal";
+  const JOIN_COURSE_ID = (() => { try { return new URLSearchParams(window.location.search).get('course') || ''; } catch(e) { return ''; } })();
+
+    document.title = PAGE_TITLE;
+
+
+
+  
+  const STUDENT_TOKEN_KEY = 'student_auth_token';
+  const STUDENT_SESSION_KEY = 'student_session';
+  const STUDENT_REMEMBER_KEY = 'student_remember_me';
+  const TEACHER_TOKEN_KEY = 'teacher_auth_token';
+
+  let teacherRegistrationAdminToken = '';
+
+  function getStoredToken(key) {
+    try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
+  }
+
+  function getStudentStoredToken() {
+    try {
+      // sessionStorage มาก่อน: ใช้เฉพาะแท็บ/หน้าต่างปัจจุบัน
+      const sessionToken = sessionStorage.getItem(STUDENT_TOKEN_KEY) || '';
+      if (sessionToken) return sessionToken;
+
+      // localStorage ใช้เฉพาะกรณีที่ผู้ใช้ "ตั้งใจ" เลือกจดจำฉัน
+      const remember = localStorage.getItem(STUDENT_REMEMBER_KEY) === '1';
+      if (!remember) {
+        // ล้าง token เก่าจาก V2.1/V2.4 ที่เคยบันทึก localStorage อัตโนมัติ
+        localStorage.removeItem(STUDENT_TOKEN_KEY);
+        localStorage.removeItem(STUDENT_SESSION_KEY);
+        return '';
+      }
+
+      return localStorage.getItem(STUDENT_TOKEN_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function escapeHtmlLogin(v) {
+    return String(v ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[c]));
+  }
+
+  function getStudentStoredProfile() {
+    try {
+      const sessionProfile = sessionStorage.getItem(STUDENT_SESSION_KEY);
+      if (sessionProfile) return JSON.parse(sessionProfile);
+
+      if (localStorage.getItem(STUDENT_REMEMBER_KEY) === '1') {
+        const saved = localStorage.getItem(STUDENT_SESSION_KEY);
+        return saved ? JSON.parse(saved) : {};
+      }
+
+      return {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function clearStudentAuth() {
+    try {
+      localStorage.removeItem(STUDENT_TOKEN_KEY);
+      localStorage.removeItem(STUDENT_SESSION_KEY);
+      localStorage.removeItem(STUDENT_REMEMBER_KEY);
+
+      sessionStorage.removeItem(STUDENT_TOKEN_KEY);
+      sessionStorage.removeItem(STUDENT_SESSION_KEY);
+    } catch (e) {}
+  }
+
+  function clearTeacherAuth() {
+    try {
+      localStorage.removeItem(TEACHER_TOKEN_KEY);
+      localStorage.removeItem('admin_authenticated');
+      localStorage.removeItem('teacher_id');
+      localStorage.removeItem('teacher_name');
+      localStorage.removeItem('teacher_role');
+    } catch (e) {}
+  }
+
+  function saveStudentAuth(res, rememberMe) {
+    try {
+      // ล้างค่าก่อนทุกครั้ง ป้องกันบัญชีเก่าปะปนกัน
+      clearStudentAuth();
+
+      const token = res?.authToken || '';
+      const profile = JSON.stringify(res?.student || {});
+
+      if (rememberMe) {
+        localStorage.setItem(STUDENT_TOKEN_KEY, token);
+        localStorage.setItem(STUDENT_SESSION_KEY, profile);
+        localStorage.setItem(STUDENT_REMEMBER_KEY, '1');
+      } else {
+        sessionStorage.setItem(STUDENT_TOKEN_KEY, token);
+        sessionStorage.setItem(STUDENT_SESSION_KEY, profile);
+      }
+    } catch (e) {}
+  }
+
+  function saveTeacherAuth(res) {
+    try {
+      localStorage.setItem(TEACHER_TOKEN_KEY, res.authToken || '');
+      localStorage.setItem('admin_authenticated', 'true');
+      if (res.teacher) {
+        localStorage.setItem('teacher_id', res.teacher.TeacherID || '');
+        localStorage.setItem('teacher_name', res.teacher.Name || '');
+        localStorage.setItem('teacher_role', res.teacher.Role || (res.isAdmin ? 'admin' : 'teacher'));
+      }
+    } catch (e) {}
+  }
+
+  function handleAuthFailure(res, type) {
+    if (!res || !res.authRequired) return false;
+    if (type === 'teacher') clearTeacherAuth(); else clearStudentAuth();
+    Swal.fire({
+      icon: 'warning',
+      title: 'Session หมดอายุ',
+      text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+      confirmButtonColor: type === 'teacher' ? '#059669' : '#0284c7'
+    });
+    return true;
+  }
+
+
+  let registeredAvatarBase64 = null;
+
+
+
+    function navigateToPage(pageName, params) {
+      if (window.LMS && typeof window.LMS.navigateTo === 'function') {
+        return window.LMS.navigateTo(pageName, params);
+      }
+
+
+      let baseUrl = window.CONFIG?.API_URL || "";
+
+      if (!baseUrl || baseUrl.trim() === '' || !baseUrl.startsWith('http')) {
+
+        baseUrl = window.location.href.split('?')[0].split('#')[0];
+
+      }
+
+      const separator = baseUrl.includes('?') ? '&' : '?';
+
+      let targetUrl = baseUrl + separator + 'page=' + encodeURIComponent(pageName);
+
+
+
+      if (params && typeof params === 'object') {
+
+        Object.keys(params).forEach(key => {
+
+          if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+
+            targetUrl += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+
+          }
+
+        });
+
+      }
+
+
+
+      showLoadingPopup('กำลังเปลี่ยนหน้า...', 'กรุณารอสักครู่');
+
+
+
+      try {
+
+        if (window.top && window.top.location) {
+
+          window.top.location.href = targetUrl;
+
+          return;
+
+        }
+
+      } catch (e) {}
+
+
+
+      try {
+
+        window.location.href = targetUrl;
+
+        return;
+
+      } catch (e) {}
+
+
+
+      try {
+
+        const a = document.createElement('a');
+
+        a.href = targetUrl;
+
+        a.target = '_top';
+
+        document.body.appendChild(a);
+
+        a.click();
+
+      } catch (e) {
+
+        window.open(targetUrl, '_top');
+
+      }
+
+    }
+
+
+
+    function applyLoginLogo(logoUrl) {
+
+      if (!logoUrl) logoUrl = '';
+
+      logoUrl = logoUrl.trim();
+
+
+
+      const logoImg = document.getElementById('loginBrandLogoImg');
+
+      const logoIcon = document.getElementById('loginBrandLogoIcon');
+
+      if (logoImg && logoIcon) {
+
+        if (logoUrl) {
+
+          logoImg.src = logoUrl;
+
+          logoImg.classList.remove('hidden');
+
+          logoIcon.classList.add('hidden');
+
+        } else {
+
+          logoImg.src = '';
+
+          logoImg.classList.add('hidden');
+
+          logoIcon.classList.remove('hidden');
+
+        }
+
+      }
+
+
+
+      try {
+
+        if (logoUrl) localStorage.setItem('schoolLogo', logoUrl);
+
+      } catch(e) {}
+
+    }
+
+
+
+    // Auto-login / Persistent Session for Students
+
+    function initApp() {
+      if (JOIN_COURSE_ID) document.getElementById('joinCourseBanner')?.classList.remove('hidden');
+      try { if ('serviceWorker' in navigator) if (window.CONFIG?.API_URL) navigator.serviceWorker.register(window.CONFIG.API_URL + '?asset=sw').catch(()=>{}); } catch(e) {}
+    try {
+      const cachedLogo = localStorage.getItem('schoolLogo');
+      if (cachedLogo) applyLoginLogo(cachedLogo);
+    } catch(e) {}
+
+    try {
+      const serverLogo = 'const serverLogo = '';
+    try { if (window.LMS) LMS.loadCachedLogo(); } catch(e) {}
+if (serverLogo) applyLoginLogo(serverLogo);
+    } catch(e) {}
+
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(cfg => {
+          if (cfg && cfg.SchoolLogo) applyLoginLogo(cfg.SchoolLogo);
+        }).getSystemConfig();
+      }
+    } catch(e) {}
+
+    // ถ้ามาจาก "ออกจากระบบ / สลับบัญชี" ให้ล้าง session และไม่ถามบัญชีเดิมซ้ำ
+    let forceSwitch = false;
+    try {
+      const q = new URLSearchParams(window.location.search);
+      forceSwitch = q.get('switch') === '1' || q.get('logout') === '1';
+    } catch (e) {}
+
+    if (forceSwitch) {
+      clearStudentAuth();
+      return;
+    }
+
+    const token = getStudentStoredToken();
+    if (!token || typeof google === 'undefined' || !google.script || !google.script.run) return;
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (!res || !res.valid || res.type !== 'student') {
+          clearStudentAuth();
+          return;
+        }
+
+        // แสดง Welcome Back เฉพาะคนที่ติ๊ก "จดจำฉัน" จริงเท่านั้น
+        let remembered = false;
+        try {
+          remembered = localStorage.getItem(STUDENT_REMEMBER_KEY) === '1';
+        } catch(e) {}
+
+        if (!remembered) {
+          // session ของแท็บปัจจุบัน: ถ้าอยู่หน้า login เพราะย้อนกลับมา
+          // ให้เข้า Student Portal ต่อได้เลยโดยไม่ขึ้น popup
+          navigateToPage('index');
+          return;
+        }
+
+        const saved = getStudentStoredProfile();
+
+        Swal.fire({
+          icon: 'info',
+          title: 'ยินดีต้อนรับกลับ ✨',
+          html: `<p class="text-sm text-slate-600 mb-1">มีบัญชีที่คุณเลือกให้ระบบจดจำไว้ <b>${escapeHtmlLogin(saved.Name || res.displayName || 'นักเรียน')}</b></p>
+                 <p class="text-xs text-slate-400">ต้องการเข้าสู่ระบบต่อ หรือใช้บัญชีอื่น?</p>`,
+          showCancelButton: true,
+          showDenyButton: true,
+          confirmButtonText: 'เข้าสู่ระบบทันที',
+          denyButtonText: 'ใช้บัญชีอื่น',
+          cancelButtonText: 'อยู่หน้า Login',
+          confirmButtonColor: '#0284c7',
+          denyButtonColor: '#64748b',
+          cancelButtonColor: '#cbd5e1'
+        }).then(r => {
+          if (r.isConfirmed) {
+            navigateToPage('index');
+          } else if (r.isDenied) {
+            clearStudentAuth();
+            document.getElementById('loginUsername')?.focus();
+          }
+        });
+      })
+      .withFailureHandler(() => {
+        clearStudentAuth();
+      })
+      .validateSession(token, 'student');
+  }
+
+
+
+    function setAuthTab(tab) {
+
+      const loginForm = document.getElementById('loginForm');
+
+      const regForm = document.getElementById('registerForm');
+
+      const tabLoginBtn = document.getElementById('tabLoginBtn');
+
+      const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+
+
+
+      if (tab === 'login') {
+
+        loginForm.classList.remove('hidden');
+
+        regForm.classList.add('hidden');
+
+        tabLoginBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-sky-800 bg-white shadow-sm transition-all duration-200 flex items-center justify-center gap-2';
+
+        tabRegisterBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all duration-200 flex items-center justify-center gap-2';
+
+      } else {
+
+        loginForm.classList.add('hidden');
+
+        regForm.classList.remove('hidden');
+
+        tabRegisterBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-sky-800 bg-white shadow-sm transition-all duration-200 flex items-center justify-center gap-2';
+
+        tabLoginBtn.className = 'flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all duration-200 flex items-center justify-center gap-2';
+
+      }
+
+    }
+
+
+
+    function togglePassVisibility(inputId, btn) {
+
+      const input = document.getElementById(inputId);
+
+      const icon = btn.querySelector('i');
+
+      if (input.type === 'password') {
+
+        input.type = 'text';
+
+        icon.className = 'fa-solid fa-eye-slash text-sm text-sky-600';
+
+      } else {
+
+        input.type = 'password';
+
+        icon.className = 'fa-solid fa-eye text-sm text-slate-400';
+
+      }
+
+    }
+
+
+
+    function previewRegAvatar(e) {
+
+      const file = e.target.files[0];
+
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(evt) {
+
+        registeredAvatarBase64 = evt.target.result;
+
+        document.getElementById('regPhotoPreview').src = evt.target.result;
+
+      };
+
+      reader.readAsDataURL(file);
+
+    }
+
+
+
+    let isLoadingPopupActive = false;
+
+
+
+    function showLoadingPopup(title = 'กำลังโหลดข้อมูล...', text = 'กำลังดึงข้อมูลจากระบบ กรุณารอสักครู่') {
+
+      isLoadingPopupActive = true;
+
+      Swal.fire({
+
+        title: title,
+
+        text: text,
+
+        allowOutsideClick: true,
+
+        showConfirmButton: false,
+
+        didOpen: () => {
+
+          Swal.showLoading();
+
+          if (!isLoadingPopupActive) {
+
+            Swal.close();
+
+          }
+
+        }
+
+      });
+
+    }
+
+
+
+    function closeLoadingPopup() {
+
+      isLoadingPopupActive = false;
+
+      try { Swal.close(); } catch(e) {}
+
+      setTimeout(() => {
+
+        try {
+
+          if (typeof Swal !== 'undefined' && Swal.isVisible() && Swal.getTitle() && Swal.getTitle().textContent.includes('กำลัง')) {
+
+            Swal.close();
+
+          }
+
+        } catch(e) {}
+
+      }, 150);
+
+      setTimeout(() => {
+
+        try {
+
+          if (typeof Swal !== 'undefined' && Swal.isVisible() && Swal.getTitle() && Swal.getTitle().textContent.includes('กำลัง')) {
+
+            Swal.close();
+
+          }
+
+        } catch(e) {}
+
+      }, 500);
+
+    }
+
+
+
+
+    function studentForgotPasswordInfo() {
+      Swal.fire({
+        icon:'info',
+        title:'ลืมรหัสผ่านนักเรียน',
+        html:
+          '<div class="text-sm text-slate-600 leading-6">' +
+          'กรุณาติดต่อครูผู้สอนเพื่อให้ครู <b>รีเซ็ตรหัสผ่านจากหลังบ้าน</b><br>' +
+          'เมื่อครูตั้งรหัสใหม่แล้ว สามารถใช้รหัสใหม่เข้าสู่ระบบได้ทันที' +
+          '</div>',
+        confirmButtonText:'เข้าใจแล้ว',
+        confirmButtonColor:'#0284c7'
+      });
+    }
+
+    function openTeacherForgotPassword() {
+      Swal.fire({
+        title:'ลืมรหัสผ่านครู',
+        html:
+          '<div class="text-xs text-slate-500 mb-3">กรอก TeacherID หรืออีเมลที่บันทึกไว้ในระบบ ระบบจะส่ง OTP 6 หลักไปยังอีเมลนั้น</div>' +
+          '<input id="teacherResetIdentifier" class="swal2-input" placeholder="TeacherID หรือ Email" autocomplete="username">',
+        showCancelButton:true,
+        confirmButtonText:'ส่ง OTP',
+        cancelButtonText:'ยกเลิก',
+        confirmButtonColor:'#059669',
+        focusConfirm:false,
+        preConfirm:() => {
+          const identifier =
+            document.getElementById('teacherResetIdentifier')?.value?.trim() || '';
+          if (!identifier) {
+            Swal.showValidationMessage('กรุณากรอก TeacherID หรืออีเมล');
+            return false;
+          }
+          return identifier;
+        }
+      }).then(result => {
+        if (!result.isConfirmed) return;
+
+        showLoadingPopup('กำลังส่ง OTP...', 'กรุณารอสักครู่');
+
+        google.script.run
+          .withSuccessHandler(res => {
+            closeLoadingPopup();
+
+            if (!res?.success) {
+              return Swal.fire({
+                icon:'error',
+                title:'ส่ง OTP ไม่สำเร็จ',
+                text:res?.message || 'เกิดข้อผิดพลาด',
+                confirmButtonColor:'#059669'
+              });
+            }
+
+            openTeacherResetOtpStep(
+              res.resetToken,
+              res.maskedEmail,
+              res.expiresMinutes || 10
+            );
+          })
+          .withFailureHandler(err => {
+            closeLoadingPopup();
+            Swal.fire({
+              icon:'error',
+              title:'ส่ง OTP ไม่สำเร็จ',
+              text:err?.message || String(err)
+            });
+          })
+          .requestTeacherPasswordReset({
+            identifier:String(result.value || '').trim()
+          });
+      });
+    }
+
+    function openTeacherResetOtpStep(resetToken, maskedEmail, expiresMinutes) {
+      Swal.fire({
+        title:'ตั้งรหัสผ่านครูใหม่',
+        html:
+          '<div class="text-xs text-slate-500 mb-3">' +
+          'ส่ง OTP ไปที่ <b>' + escapeHtmlLogin(maskedEmail || '') + '</b> แล้ว • หมดอายุใน ' +
+          escapeHtmlLogin(expiresMinutes || 10) + ' นาที' +
+          '</div>' +
+          '<input id="teacherResetOtp" class="swal2-input text-center" inputmode="numeric" maxlength="6" placeholder="OTP 6 หลัก" autocomplete="one-time-code">' +
+          '<input id="teacherResetNewPass" type="password" class="swal2-input" placeholder="รหัสผ่านใหม่ อย่างน้อย 6 ตัว">' +
+          '<input id="teacherResetConfirmPass" type="password" class="swal2-input" placeholder="ยืนยันรหัสผ่านใหม่">',
+        showCancelButton:true,
+        confirmButtonText:'ตั้งรหัสใหม่',
+        cancelButtonText:'ยกเลิก',
+        confirmButtonColor:'#059669',
+        focusConfirm:false,
+        preConfirm:() => {
+          const otp =
+            document.getElementById('teacherResetOtp')?.value?.trim() || '';
+          const pass =
+            document.getElementById('teacherResetNewPass')?.value || '';
+          const confirm =
+            document.getElementById('teacherResetConfirmPass')?.value || '';
+
+          if (!/^\d{6}$/.test(otp)) {
+            Swal.showValidationMessage('กรุณากรอก OTP 6 หลัก');
+            return false;
+          }
+
+          if (pass.length < 6) {
+            Swal.showValidationMessage('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
+            return false;
+          }
+
+          if (pass !== confirm) {
+            Swal.showValidationMessage('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน');
+            return false;
+          }
+
+          return { otp, pass };
+        }
+      }).then(result => {
+        if (!result.isConfirmed) return;
+
+        showLoadingPopup(
+          'กำลังตั้งรหัสผ่านใหม่...',
+          'กำลังตรวจสอบ OTP และบันทึกรหัสผ่าน'
+        );
+
+        google.script.run
+          .withSuccessHandler(res => {
+            closeLoadingPopup();
+
+            if (!res?.success) {
+              return Swal.fire({
+                icon:'error',
+                title:'ตั้งรหัสผ่านไม่สำเร็จ',
+                text:res?.message || 'เกิดข้อผิดพลาด',
+                confirmButtonColor:'#059669'
+              });
+            }
+
+            clearTeacherAuth();
+            document.getElementById('modalTeacherPassword').value = '';
+
+            Swal.fire({
+              icon:'success',
+              title:'เปลี่ยนรหัสผ่านเรียบร้อย',
+              text:'ใช้รหัสผ่านใหม่เข้าสู่ระบบครูได้ทันที',
+              confirmButtonColor:'#059669'
+            });
+          })
+          .withFailureHandler(err => {
+            closeLoadingPopup();
+            Swal.fire({
+              icon:'error',
+              title:'ตั้งรหัสผ่านไม่สำเร็จ',
+              text:err?.message || String(err)
+            });
+          })
+          .confirmTeacherPasswordReset({
+            resetToken:resetToken,
+            otp:result.value.otp,
+            newPassword:result.value.pass
+          });
+      });
+    }
+
+
+    function handleLoginSubmit(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const rememberMe = !!document.getElementById('rememberMe')?.checked;
+    if (!username || !password) {
+      Swal.fire({ icon: 'warning', title: 'กรุณากรอกข้อมูล', text: 'โปรดกรอกรหัสนักเรียนและรหัสผ่านให้ครบถ้วน', confirmButtonColor: '#0284c7' });
+      return;
+    }
+    showLoadingPopup('กำลังเข้าสู่ระบบ...', 'กำลังตรวจสอบข้อมูลส่วนตัว กรุณารอสักครู่');
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(res => {
+          closeLoadingPopup();
+          if (res && res.success && res.authToken) {
+            saveStudentAuth(res, rememberMe);
+            if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+            Swal.fire({ icon: 'success', title: '✨ เข้าสู่ระบบสำเร็จ!', text: 'ยินดีต้อนรับ ' + (res.student?.Name || 'นักเรียน'), timer: 1000, showConfirmButton: false })
+              .then(() => navigateToPage('index'));
+          } else {
+            clearStudentAuth();
+            const authCard = document.getElementById('authCard');
+            if (authCard) { authCard.classList.add('shake-anim'); setTimeout(() => authCard.classList.remove('shake-anim'), 500); }
+            Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: res?.message || 'รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง', confirmButtonColor: '#0284c7' });
+          }
+        })
+        .withFailureHandler(err => {
+          closeLoadingPopup();
+          clearStudentAuth();
+          Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err?.message || String(err), confirmButtonColor: '#0284c7' });
+        })
+        .studentLogin({ username, password, rememberMe });
+    } else {
+      closeLoadingPopup();
+      Swal.fire({ icon: 'info', title: 'โหมด Preview', text: 'การเข้าสู่ระบบจริงต้องเปิดผ่าน Google Apps Script Web App', confirmButtonColor: '#0284c7' });
+    }
+  }
+
+
+
+    function handleRegisterSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const studentClass = document.getElementById('regClass').value.trim();
+    const number = document.getElementById('regNumber').value;
+    const studentId = document.getElementById('regStudentId').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const passConfirm = document.getElementById('regPassConfirm').value;
+    if (!name || !studentClass || !number) return Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณากรอกชื่อ ชั้นเรียน และเลขที่ให้ครบ', confirmButtonColor: '#0284c7' });
+    if (pass.length < 8) return Swal.fire({ icon: 'warning', title: 'รหัสผ่านสั้นเกินไป', text: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', confirmButtonColor: '#0284c7' });
+    if (pass !== passConfirm) return Swal.fire({ icon: 'warning', title: 'รหัสผ่านไม่ตรงกัน', confirmButtonColor: '#0284c7' });
+    if (registeredAvatarBase64 && registeredAvatarBase64.length > 7 * 1024 * 1024) return Swal.fire({ icon:'warning', title:'รูปภาพมีขนาดใหญ่เกินไป', text:'กรุณาใช้รูปไม่เกินประมาณ 5MB' });
+
+    showLoadingPopup('กำลังลงทะเบียน...', 'กำลังบันทึกข้อมูลนักเรียนใหม่เข้าสู่ระบบ');
+    const payload = { name, class: studentClass, number, studentId, email, password: pass, base64Data: registeredAvatarBase64 };
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(res => {
+          closeLoadingPopup();
+          if (res && res.success && res.authToken) {
+            saveStudentAuth(res, false);
+            if (typeof confetti === 'function') confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+            Swal.fire({ icon:'success', title:'🎉 ลงทะเบียนสำเร็จ!', text:'ยินดีต้อนรับ ' + (res.student?.Name || name), timer:1200, showConfirmButton:false })
+              .then(() => navigateToPage('index'));
+          } else {
+            Swal.fire({ icon:'error', title:'ลงทะเบียนไม่สำเร็จ', text:res?.message || 'เกิดข้อผิดพลาด', confirmButtonColor:'#0284c7' });
+          }
+        })
+        .withFailureHandler(err => { closeLoadingPopup(); Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:err?.message || String(err), confirmButtonColor:'#0284c7' }); })
+        .studentRegister(payload);
+    } else {
+      closeLoadingPopup();
+      Swal.fire({ icon:'info', title:'โหมด Preview', text:'การลงทะเบียนจริงต้องเปิดผ่าน Google Apps Script Web App' });
+    }
+  }
+
+
+
+    function checkPassStrength(val) {
+
+      const bar = document.getElementById('passStrengthBar');
+
+      const text = document.getElementById('passStrengthText');
+
+      if (!val) {
+
+        bar.style.width = '0%';
+
+        bar.className = 'h-full rounded-full transition-all duration-300 bg-slate-300';
+
+        text.textContent = '8 ตัวขึ้นไป';
+
+        text.className = 'text-[10px] font-bold text-slate-400';
+
+        return;
+
+      }
+
+      let score = 0;
+
+      if (val.length >= 8) score += 40;
+
+      if (val.length >= 10) score += 20;
+
+      if (/[A-Z]/.test(val) || /[a-z]/.test(val)) score += 20;
+
+      if (/[0-9]/.test(val)) score += 10;
+
+      if (/[^A-Za-z0-9]/.test(val)) score += 10;
+
+
+
+      if (score < 40) {
+
+        bar.style.width = '25%';
+
+        bar.className = 'h-full rounded-full transition-all duration-300 bg-rose-500';
+
+        text.textContent = 'สั้นเกินไป';
+
+        text.className = 'text-[10px] font-bold text-rose-500';
+
+      } else if (score < 70) {
+
+        bar.style.width = '60%';
+
+        bar.className = 'h-full rounded-full transition-all duration-300 bg-amber-500';
+
+        text.textContent = 'ปานกลาง';
+
+        text.className = 'text-[10px] font-bold text-amber-500';
+
+      } else {
+
+        bar.style.width = '100%';
+
+        bar.className = 'h-full rounded-full transition-all duration-300 bg-emerald-500';
+
+        text.textContent = 'แข็งแรง ปลอดภัย ✨';
+
+        text.className = 'text-[10px] font-bold text-emerald-600';
+
+      }
+
+      checkPassMatch();
+
+    }
+
+
+
+    function checkPassMatch() {
+
+      const p1 = document.getElementById('regPass').value;
+
+      const p2 = document.getElementById('regPassConfirm').value;
+
+      const matchText = document.getElementById('passMatchText');
+
+      if (!p2) {
+
+        matchText.textContent = '';
+
+        return;
+
+      }
+
+      if (p1 === p2) {
+
+        matchText.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i> ตรงกัน';
+
+        matchText.className = 'text-[10px] font-bold text-emerald-600';
+
+      } else {
+
+        matchText.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i> ไม่ตรงกัน';
+
+        matchText.className = 'text-[10px] font-bold text-rose-500';
+
+      }
+
+    }
+
+
+
+    function handleLogoClick() {
+
+      if (typeof confetti === 'function') {
+
+        confetti({ particleCount: 40, spread: 50, origin: { y: 0.3 } });
+
+      }
+
+    }
+
+
+
+    let teacherRegAvatarBase64 = null;
+
+    let isTeacherRegisterUnlocked = false;
+
+
+
+    function openTeacherModal() {
+
+      document.getElementById('teacherAuthModal').classList.remove('hidden');
+
+      setTeacherAuthTab('login');
+
+    }
+
+
+
+    function closeTeacherModal() {
+
+      document.getElementById('teacherAuthModal').classList.add('hidden');
+
+    }
+
+
+
+    function promptTeacherLogin() {
+
+      openTeacherModal();
+
+    }
+
+
+
+    function setTeacherAuthTab(tab) {
+
+      const loginForm = document.getElementById('teacherLoginForm');
+
+      const regForm = document.getElementById('teacherRegisterForm');
+
+      const tabLoginBtn = document.getElementById('tabTeacherLoginBtn');
+
+      const tabRegBtn = document.getElementById('tabTeacherRegBtn');
+
+      const lockIcon = document.getElementById('regTabLockIcon');
+
+
+
+      if (tab === 'login') {
+
+        loginForm.classList.remove('hidden');
+
+        regForm.classList.add('hidden');
+
+        tabLoginBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-white shadow-sm transition flex items-center justify-center gap-1.5';
+
+        tabRegBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center justify-center gap-1.5';
+
+      } else {
+
+        loginForm.classList.add('hidden');
+
+        regForm.classList.remove('hidden');
+
+        tabRegBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-white shadow-sm transition flex items-center justify-center gap-1.5';
+
+        tabLoginBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center justify-center gap-1.5';
+
+        if (lockIcon) {
+
+          lockIcon.className = 'fa-solid fa-lock-open text-emerald-600';
+
+        }
+
+      }
+
+    }
+
+
+
+    function handleTeacherRegisterTabClick() {
+    if (isTeacherRegisterUnlocked && teacherRegistrationAdminToken) {
+      setTeacherAuthTab('register');
+      return;
+    }
+    Swal.fire({
+      title: '<div class="flex items-center justify-center gap-2 text-emerald-800"><i class="fa-solid fa-shield-halved text-emerald-600"></i> ยืนยันสิทธิ์ผู้ดูแล</div>',
+      text: 'การสร้างบัญชีครูใหม่อนุญาตเฉพาะบัญชีผู้ดูแลระบบ',
+      input: 'password', inputPlaceholder: 'รหัสผ่านบัญชีผู้ดูแลระบบ', showCancelButton: true,
+      confirmButtonText: 'ยืนยันสิทธิ์', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#059669', allowOutsideClick: false,
+      preConfirm: pwd => pwd?.trim() || Swal.showValidationMessage('กรุณากรอกรหัสผ่าน')
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      showLoadingPopup('กำลังตรวจสอบสิทธิ์...', 'กำลังยืนยันบัญชีผู้ดูแลระบบ');
+      google.script.run
+        .withSuccessHandler(res => {
+          closeLoadingPopup();
+          if (res?.success && res?.isAdmin && res?.authToken) {
+            teacherRegistrationAdminToken = res.authToken;
+            isTeacherRegisterUnlocked = true;
+            setTeacherAuthTab('register');
+            Swal.fire({ icon:'success', title:'ยืนยันสิทธิ์สำเร็จ', timer:1000, showConfirmButton:false });
+          } else {
+            teacherRegistrationAdminToken = '';
+            Swal.fire({ icon:'error', title:'ไม่มีสิทธิ์ผู้ดูแลระบบ', text: res?.message || 'บัญชีนี้ไม่ใช่ผู้ดูแลระบบ', confirmButtonColor:'#059669' });
+          }
+        })
+        .withFailureHandler(err => { closeLoadingPopup(); Swal.fire({ icon:'error', title:'ตรวจสอบสิทธิ์ไม่สำเร็จ', text:err?.message || String(err) }); })
+        .adminLogin(String(result.value || '').trim());
+    });
+  }
+
+
+
+    function previewTeacherRegAvatar(e) {
+
+      const file = e.target.files[0];
+
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(evt) {
+
+        teacherRegAvatarBase64 = evt.target.result;
+
+        document.getElementById('teacherRegPhotoPreview').src = evt.target.result;
+
+      };
+
+      reader.readAsDataURL(file);
+
+    }
+
+
+
+    function handleTeacherLoginSubmit(e) {
+    e.preventDefault();
+    const pwd = document.getElementById('modalTeacherPassword').value;
+    if (!pwd) return Swal.fire({ icon:'warning', title:'กรุณากรอกรหัสผ่าน', confirmButtonColor:'#059669' });
+    showLoadingPopup('กำลังตรวจสอบสิทธิ์...', 'กำลังยืนยันบัญชีครูผู้สอน');
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(res => {
+          closeLoadingPopup();
+          if (res?.success && res?.authToken) {
+            saveTeacherAuth(res);
+            closeTeacherModal();
+            Swal.fire({ icon:'success', title:'เข้าสู่ระบบสำเร็จ!', text:'ยินดีต้อนรับ ' + (res.teacher?.Name || 'ครูผู้สอน'), timer:1000, showConfirmButton:false })
+              .then(() => navigateToPage('admin'));
+          } else {
+            clearTeacherAuth();
+            Swal.fire({ icon:'error', title:'รหัสผ่านไม่ถูกต้อง', text:res?.message || 'กรุณาลองใหม่อีกครั้ง', confirmButtonColor:'#059669' });
+          }
+        })
+        .withFailureHandler(err => { closeLoadingPopup(); clearTeacherAuth(); Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:err?.message || String(err), confirmButtonColor:'#059669' }); })
+        .adminLogin(pwd);
+    } else {
+      closeLoadingPopup();
+      Swal.fire({ icon:'info', title:'โหมด Preview', text:'การเข้าสู่ระบบครูจริงต้องเปิดผ่าน Google Apps Script Web App' });
+    }
+  }
+
+
+
+    function handleTeacherRegisterSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('teacherRegName').value.trim();
+    const subject = document.getElementById('teacherRegSubject').value.trim();
+    const cls = document.getElementById('teacherRegClass').value.trim();
+    const email = document.getElementById('teacherRegEmail').value.trim();
+    const pass = document.getElementById('teacherRegPass').value;
+    const passConfirm = document.getElementById('teacherRegPassConfirm').value;
+    if (!teacherRegistrationAdminToken) return Swal.fire({ icon:'warning', title:'กรุณายืนยันสิทธิ์ผู้ดูแลระบบใหม่' });
+    if (!name || !subject) return Swal.fire({ icon:'warning', title:'ข้อมูลไม่ครบ', text:'กรุณากรอกชื่อและรายวิชา' });
+    if (!pass || pass.length < 6) return Swal.fire({ icon:'warning', title:'รหัสผ่านสั้นเกินไป', text:'อย่างน้อย 6 ตัวอักษร' });
+    if (pass !== passConfirm) return Swal.fire({ icon:'error', title:'รหัสผ่านไม่ตรงกัน' });
+    showLoadingPopup('กำลังสร้างบัญชีครู...', 'กำลังบันทึกข้อมูลอย่างปลอดภัย');
+    const payload = { authToken: teacherRegistrationAdminToken, name, subject, classResponsible: cls || 'ทุกระดับชั้น', email, password: pass, base64Data: teacherRegAvatarBase64 };
+    google.script.run
+      .withSuccessHandler(res => {
+        if (!res?.success) {
+          closeLoadingPopup();
+          if (handleAuthFailure(res, 'teacher')) teacherRegistrationAdminToken = '';
+          else Swal.fire({ icon:'error', title:'ลงทะเบียนไม่สำเร็จ', text:res?.message || 'เกิดข้อผิดพลาด' });
+          return;
+        }
+        // ขอ session ของบัญชีครูใหม่ด้วยรหัสผ่านที่เพิ่งตั้ง
+        google.script.run
+          .withSuccessHandler(loginRes => {
+            closeLoadingPopup();
+            teacherRegistrationAdminToken = '';
+            if (loginRes?.success && loginRes?.authToken) {
+              saveTeacherAuth(loginRes);
+              closeTeacherModal();
+              Swal.fire({ icon:'success', title:'ลงทะเบียนสำเร็จ!', text:'กำลังเข้าสู่ระบบด้วยบัญชีครูใหม่', timer:1100, showConfirmButton:false })
+                .then(() => navigateToPage('admin'));
+            } else Swal.fire({ icon:'success', title:'สร้างบัญชีครูสำเร็จ', text:'กรุณาเข้าสู่ระบบด้วยรหัสผ่านที่ตั้งไว้' });
+          })
+          .withFailureHandler(err => { closeLoadingPopup(); Swal.fire({ icon:'success', title:'สร้างบัญชีครูสำเร็จ', text:'กรุณาเข้าสู่ระบบใหม่' }); })
+          .adminLogin(pass);
+      })
+      .withFailureHandler(err => { closeLoadingPopup(); Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:err?.message || String(err) }); })
+      .registerTeacher(payload);
+  }
+
+
+
+    if (document.readyState === 'loading') {
+
+      document.addEventListener('DOMContentLoaded', initApp);
+
+    } else {
+
+      initApp();
+
+    }
+
+  </script>
+
+
+<div id="lmsVersionBadge" style="position:fixed;right:10px;bottom:10px;z-index:99999;background:#0f172a;color:#fff;padding:4px 8px;border-radius:999px;font:600 10px Prompt,sans-serif;opacity:.72;pointer-events:none">LMS By T'jessica</div>
+</body>
+
+</html>

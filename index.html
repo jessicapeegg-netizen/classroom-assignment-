@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบส่งงานและจัดการการเรียนการสอน (Classroom LMS)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen text-slate-100 flex flex-col items-center justify-center p-6">
+  
+  <div class="max-w-md w-full bg-slate-800/80 backdrop-blur-xl border border-slate-700/60 rounded-3xl p-8 shadow-2xl text-center">
+    <div class="w-20 h-20 mx-auto mb-5 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 text-3xl shadow-lg shadow-indigo-500/10">
+      <i class="fa-solid fa-graduation-cap animate-bounce"></i>
+    </div>
+    
+    <h1 class="text-2xl font-bold text-white mb-2">Classroom LMS Portal</h1>
+    <p class="text-slate-400 text-sm mb-6">ระบบส่งงาน ตรวจการบ้าน และจัดการการเรียนการสอน</p>
+
+    <div class="flex items-center justify-center gap-2 text-indigo-400 text-sm font-medium py-3 px-4 bg-indigo-950/60 rounded-2xl border border-indigo-800/50 mb-6">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      <span>กำลังตรวจสอบการเข้าสู่ระบบและนำทาง...</span>
+    </div>
+
+    <div class="space-y-3 pt-2">
+      <a href="login.html" id="manualLoginBtn" class="block w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition duration-200 shadow-lg shadow-indigo-600/30 text-sm">
+        <i class="fa-solid fa-right-to-bracket mr-2"></i> ไปที่หน้าเข้าสู่ระบบ (Login)
+      </a>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <a href="student.html" class="py-2.5 px-3 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition border border-slate-600/40">
+          <i class="fa-solid fa-user-graduate mr-1 text-sky-400"></i> หน้านักเรียน
+        </a>
+        <a href="admin.html" class="py-2.5 px-3 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition border border-slate-600/40">
+          <i class="fa-solid fa-chalkboard-user mr-1 text-emerald-400"></i> หน้าครูผู้สอน
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-8 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-center gap-2">
+    <span>Classroom Assignment & Grading LMS • GitHub Pages + Google Sheets DB</span>
+    <span class="hidden sm:inline">•</span>
+    <div class="flex items-center gap-1.5 font-medium">
+      <span>พัฒนาระบบ โดย</span>
+      <span class="text-indigo-300 font-bold bg-indigo-950/80 px-2.5 py-0.5 rounded-lg border border-indigo-700/60 shadow-sm">Jessica_P.</span>
+    </div>
+  </footer>
+
+  <!-- Smart Router Script -->
+  <script>
+    (function routeSession() {
+      try {
+        const search = window.location.search;
+        const params = new URLSearchParams(search);
+        const reqPage = params.get('page');
+
+        // 1. ตรวจสอบ query parameters ?page=...
+        if (reqPage === 'admin' || reqPage === 'teacher') {
+          window.location.replace('admin.html' + search);
+          return;
+        } else if (reqPage === 'student' || reqPage === 'index') {
+          window.location.replace('student.html' + search);
+          return;
+        } else if (reqPage === 'login') {
+          window.location.replace('login.html' + search);
+          return;
+        }
+
+        // 2. หากมี Active Session ของครู
+        const teacherToken = LMS.getTeacherToken();
+        if (teacherToken) {
+          window.location.replace('admin.html' + search);
+          return;
+        }
+
+        // 3. หากมี Active Session ของนักเรียน
+        const studentToken = LMS.getStudentToken();
+        if (studentToken) {
+          window.location.replace('student.html' + search);
+          return;
+        }
+
+        // 4. หากไม่มี Session ส่งต่อไปที่ login.html พร้อมคง query parameters ไว้ (เช่น ?course=...)
+        setTimeout(() => {
+          window.location.replace('login.html' + search);
+        }, 150);
+      } catch (err) {
+        console.error('[Router Error]', err);
+      }
+    })();
+  </script>
+</body>
+</html>
